@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Data files (pueden ser grandes)
+data/raw/
+data/processed/*.csv
+data/processed/*.parquet
+*.db
+*.sqlite
+
+# Model files (pueden ser grandes)
+models/saved/*.h5
+models/saved/*.pkl
+models/saved/*.joblib
+models/checkpoints/
+
+# Backtesting results
+backtesting/results/*.csv
+backtesting/results/*.html
+
+# Secrets
+secrets/
+*.key
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db
+
