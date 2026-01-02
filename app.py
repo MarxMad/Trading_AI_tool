@@ -19,6 +19,7 @@ from monitoring.image_analyzer import ImageAnalyzer
 from monitoring.trading_journal import TradingJournal
 from payment.stripe_handler import StripeHandler, STRIPE_PRICE_IDS
 from database.db_handler import DatabaseHandler
+# CoinW integration removed for security reasons
 
 # Configuración de la página
 st.set_page_config(
@@ -184,89 +185,145 @@ st.markdown("""
     }
     
     .stButton > button[kind="primary"] {
-        background: #10b981;
-        border-color: #10b981;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
         color: #ffffff;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 1rem 2rem;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stButton > button[kind="primary"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
     }
     
     .stButton > button[kind="primary"]:hover {
-        background: #059669;
-        border-color: #059669;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
     }
     
-    /* Header personalizado - Estilo Tech */
+    .stButton > button[kind="primary"]:hover::before {
+        left: 100%;
+    }
+    
+    /* Header personalizado - Estilo Tech con contornos dorados */
     .main-header {
-        background: #1a1a1a;
-        padding: 2rem;
-        border-radius: 8px;
-        border: 1px solid #333;
+        background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+        padding: 2.5rem;
+        border-radius: 12px;
+        border: 3px solid #d4af37;
         margin-bottom: 2rem;
         color: #e0e0e0;
+        box-shadow: 0 8px 32px rgba(212, 175, 55, 0.2), inset 0 0 20px rgba(212, 175, 55, 0.05);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .main-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #d4af37, transparent);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
     }
     
     .main-header h1 {
         color: #ffffff;
-        font-size: 2rem;
-        font-weight: 600;
+        font-size: 2.5rem;
+        font-weight: 700;
         margin: 0;
         font-family: 'Inter', 'SF Mono', monospace;
         letter-spacing: -0.5px;
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
     }
     
     .main-header p {
-        color: #a0a0a0;
-        font-size: 0.95rem;
-        margin-top: 0.5rem;
+        color: #d0d0d0;
+        font-size: 1rem;
+        margin-top: 0.75rem;
         font-weight: 400;
+        line-height: 1.6;
     }
     
-    /* Badge de plan - Tech Style */
+    .main-header .subtitle {
+        color: #d4af37;
+        font-size: 0.95rem;
+        margin-top: 1rem;
+        font-weight: 500;
+        line-height: 1.7;
+    }
+    
+    /* Badge de plan - Tech Style con contornos dorados */
     .plan-badge {
         display: inline-block;
-        padding: 0.4rem 1rem;
-        border-radius: 4px;
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border: 1px solid #333;
+        border: 2px solid #d4af37;
         position: relative;
         z-index: 1;
-        margin-top: 1rem;
+        margin-top: 1.5rem;
         font-family: 'SF Mono', monospace;
+        background: rgba(212, 175, 55, 0.1);
+        color: #d4af37;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
     }
     
     .plan-badge-free {
-        background: #1a1a1a;
-        color: #a0a0a0;
-        border-color: #444;
+        background: rgba(212, 175, 55, 0.1);
+        color: #d4af37;
+        border-color: #d4af37;
     }
     
     .plan-badge-basic {
-        background: #1a1a1a;
-        color: #10b981;
-        border-color: #10b981;
+        background: rgba(212, 175, 55, 0.15);
+        color: #d4af37;
+        border-color: #d4af37;
     }
     
     .plan-badge-pro {
-        background: #1a1a1a;
-        color: #f59e0b;
-        border-color: #f59e0b;
+        background: rgba(212, 175, 55, 0.2);
+        color: #f4d03f;
+        border-color: #f4d03f;
     }
     
     .plan-badge-enterprise {
-        background: #1a1a1a;
-        color: #fbbf24;
-        border-color: #fbbf24;
+        background: rgba(212, 175, 55, 0.25);
+        color: #f4d03f;
+        border-color: #f4d03f;
     }
     
-    /* Cards - Estilo Tech Minimalista */
+    /* Cards - Estilo Tech Minimalista con contornos dorados */
     .premium-card {
-        background: #1a1a1a;
+        background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
         padding: 1.5rem;
-        border-radius: 8px;
-        border: 1px solid #333;
+        border-radius: 12px;
+        border: 2px solid #d4af37;
         transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15);
     }
     
     .premium-card h2,
@@ -363,13 +420,19 @@ st.markdown("""
     }
     
     .trading-level-card.entry {
-        border-color: #4a9eff;
-        background: linear-gradient(135deg, rgba(74, 158, 255, 0.15) 0%, rgba(74, 158, 255, 0.05) 100%);
-        box-shadow: 0 8px 32px rgba(74, 158, 255, 0.2);
+        border-color: #d4af37;
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
+        box-shadow: 0 8px 32px rgba(212, 175, 55, 0.25);
     }
     
     .trading-level-card.entry:hover {
-        box-shadow: 0 12px 40px rgba(74, 158, 255, 0.4);
+        box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
+        border-color: #f4d03f;
+    }
+    
+    .trading-level-card.entry .price {
+        color: #d4af37;
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
     }
     
     .trading-level-card.stop-loss {
@@ -409,10 +472,6 @@ st.markdown("""
         text-shadow: 0 0 20px rgba(255,255,255,0.3);
     }
     
-    .trading-level-card.entry .price {
-        color: #4a9eff;
-        text-shadow: 0 0 20px rgba(74, 158, 255, 0.5);
-    }
     
     .trading-level-card.stop-loss .price {
         color: #f44336;
@@ -424,74 +483,102 @@ st.markdown("""
         text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
     }
     
-    /* Asset detection card - Mejorado */
+    /* Asset detection card - Mejorado con contornos dorados */
     .asset-card {
-        background: linear-gradient(135deg, rgba(74, 158, 255, 0.15) 0%, rgba(74, 158, 255, 0.05) 100%);
-        border: 2px solid #4a9eff;
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
+        border: 2px solid #d4af37;
         border-radius: 12px;
         padding: 2rem;
         margin: 1.5rem 0;
         text-align: center;
-        box-shadow: 0 8px 32px rgba(74, 158, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(212, 175, 55, 0.25);
         transition: all 0.3s ease;
     }
     
     .asset-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(74, 158, 255, 0.3);
+        box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
+        border-color: #f4d03f;
     }
     
     .asset-card .symbol {
-        color: #4a9eff;
+        color: #d4af37;
         font-size: 3rem;
         font-weight: 700;
         font-family: 'SF Mono', monospace;
         margin: 0.5rem 0;
-        text-shadow: 0 0 20px rgba(74, 158, 255, 0.5);
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
     }
     
     .asset-card .label {
-        color: #a0a0a0;
+        color: #d4af37;
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 2px;
         font-weight: 600;
     }
     
-    /* Upload area mejorada */
+    /* Upload area mejorada - Más atractiva */
     .upload-area {
-        background: #1a1a1a;
-        border: 2px dashed #4a9eff;
-        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%);
+        border: 3px dashed #4a9eff;
+        border-radius: 16px;
         padding: 3rem 2rem;
         text-align: center;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .upload-area::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(74, 158, 255, 0.1) 0%, transparent 70%);
+        animation: pulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
     }
     
     .upload-area:hover {
-        background: rgba(74, 158, 255, 0.05);
+        background: linear-gradient(135deg, rgba(74, 158, 255, 0.2) 0%, rgba(74, 158, 255, 0.1) 100%);
         border-color: #6bb6ff;
-        transform: scale(1.01);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(74, 158, 255, 0.3);
     }
     
     .upload-area .upload-icon {
-        font-size: 4rem;
+        font-size: 5rem;
         color: #4a9eff;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        filter: drop-shadow(0 0 20px rgba(74, 158, 255, 0.5));
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
     }
     
     .upload-area .upload-text {
-        color: #e0e0e0;
-        font-size: 1.1rem;
-        font-weight: 500;
+        color: #ffffff;
+        font-size: 1.3rem;
+        font-weight: 600;
         margin: 0.5rem 0;
+        letter-spacing: 0.5px;
     }
     
     .upload-area .upload-hint {
         color: #a0a0a0;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        margin-top: 0.75rem;
     }
     
     /* Sidebar - Tech Style */
@@ -861,6 +948,41 @@ def init_components():
         'db_handler': DatabaseHandler()
     }
 
+def generate_share_message(analysis: dict) -> str:
+    """
+    Genera un mensaje formateado para compartir el análisis.
+    
+    Args:
+        analysis: Diccionario con los datos del análisis
+        
+    Returns:
+        Mensaje formateado para compartir
+    """
+    symbol = analysis.get('symbol_detected', 'N/A')
+    current_price = analysis.get('current_price_read', 0)
+    entry = analysis.get('entry_price', 0)
+    stop_loss = analysis.get('stop_loss', 0)
+    take_profit = analysis.get('take_profit', 0)
+    position_type = analysis.get('position_type', 'N/A')
+    leverage = analysis.get('recommended_leverage', 'N/A')
+    strategy = analysis.get('trading_strategy', 'N/A')
+    
+    message = f"""📊 Trading Analysis - {symbol}
+
+💰 Current Price: ${current_price:.4f}
+📈 Position: {position_type.upper()}
+⚡ Leverage: {leverage}x
+
+🎯 Entry: ${entry:.4f}
+🛑 Stop Loss: ${stop_loss:.4f}
+🎯 Take Profit: ${take_profit:.4f}
+
+📋 Strategy: {strategy}
+
+🤖 Analysis by Trading AI Pro"""
+    
+    return message
+
 components = init_components()
 
 # Función helper para formatear precios con decimales apropiados
@@ -904,11 +1026,16 @@ def format_price(price: float, min_decimals: int = 2, max_decimals: int = 8) -> 
 user_plan = get_user_plan()
 plan_info = get_plan_limits(user_plan)
 
-# Header tech style
+# Header tech style con contornos dorados
 st.markdown(f"""
 <div class="main-header">
     <h1>Trading AI Pro</h1>
     <p>Professional Trading System with Artificial Intelligence</p>
+    <p class="subtitle">
+        💰 With the help of AI, we can generate excellent returns while maintaining proper risk management. 
+        Our intelligent system analyzes market patterns and provides optimal entry, stop-loss, and take-profit levels 
+        to maximize your trading performance with controlled risk.
+    </p>
     <span class="plan-badge plan-badge-{user_plan}">Plan {plan_info['name']}</span>
 </div>
 """, unsafe_allow_html=True)
@@ -925,7 +1052,7 @@ with st.sidebar:
     # Mode selector
     mode = st.selectbox(
         "Select Mode",
-        ["Image Analysis", "Trading Journal", "Plans & Subscription"],
+        ["Image Analysis", "Plans & Subscription"],
         label_visibility="visible"
     )
     
@@ -953,9 +1080,13 @@ with st.sidebar:
         <p style='margin: 0; font-size: 0.85rem;'>Current Plan: <span class="value">{plan_info['name'].upper()}</span></p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # CoinW integration removed for security reasons
 
 # Main content based on mode
 if mode == "Image Analysis":
+    # Removed trade confirmation logic and CoinW funding warning - replaced with share functionality
+    
     # Verificar límites del plan
     analyses_today = st.session_state.get('analyses_today', 0)
     if plan_info['analyses_per_day'] > 0 and analyses_today >= plan_info['analyses_per_day']:
@@ -966,7 +1097,7 @@ if mode == "Image Analysis":
         </div>
         """, unsafe_allow_html=True)
     else:
-        # Limpiar estado si se registró un trade
+        # Limpiar estado si se registró un trade (solo si NO hay confirmación activa)
         if st.session_state.get('trade_registered', False):
             # Limpiar todos los estados relacionados
             if 'last_analysis' in st.session_state:
@@ -975,6 +1106,7 @@ if mode == "Image Analysis":
                 del st.session_state['current_uploaded_file']
             st.session_state['trade_registered'] = False
         
+        # File uploader (solo se muestra si NO hay confirmación activa)
         uploaded_file = st.file_uploader(
             "Upload chart image",
             type=['png', 'jpg', 'jpeg'],
@@ -983,59 +1115,56 @@ if mode == "Image Analysis":
             key="chart_image_uploader"
         )
         
-        # Mostrar header y upload area solo si no hay imagen subida
+        # Mostrar header y upload area solo si no hay imagen subida - más compacto
         if uploaded_file is None:
-            # Header mejorado
+            # Header compacto
+            col_title, col_upload = st.columns([1, 1.5])
+            
+            with col_title:
+                st.markdown("""
+                <div style="padding: 1rem 0;">
+                    <h1 style="color: #ffffff; font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -1px;">
+                        Chart Analysis
+                    </h1>
+                    <p style="color: #a0a0a0; font-size: 0.9rem; line-height: 1.4;">
+                        Upload a chart for AI-powered analysis
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col_upload:
+                # Upload section mejorada y más atractiva
+                st.markdown("""
+                <div class="upload-area" style="background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%); border: 3px dashed #4a9eff; border-radius: 16px; padding: 3rem 2rem; text-align: center; position: relative; overflow: hidden;">
+                    <div class="upload-icon" style="font-size: 5rem; color: #4a9eff; margin-bottom: 1.5rem; filter: drop-shadow(0 0 20px rgba(74, 158, 255, 0.5)); animation: float 3s ease-in-out infinite;">📈</div>
+                    <div class="upload-text" style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin: 0.5rem 0; letter-spacing: 0.5px;">
+                        Drag & Drop Chart Image
+                    </div>
+                    <div class="upload-hint" style="color: #a0a0a0; font-size: 0.95rem; margin-top: 0.75rem;">
+                        PNG, JPG, JPEG • Max 200MB
+                    </div>
+                    <div style="color: #4a9eff; font-size: 0.9rem; margin-top: 1rem; font-weight: 500;">
+                        or click to browse
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # Si llegamos aquí, mostrar el análisis normal
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file)
+            
+            # Success message mejorado
             st.markdown("""
-            <div style="text-align: center; margin-bottom: 3rem;">
-                <h1 style="color: #ffffff; font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; letter-spacing: -1px;">
-                    Chart Analysis
-                </h1>
-                <p style="color: #a0a0a0; font-size: 1.1rem; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-                    Upload a trading chart screenshot for AI-powered technical analysis. 
-                    Get precise entry, stop loss, and take profit levels automatically.
+            <div style="margin: 1.5rem 0; padding: 1rem 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); border-radius: 12px; border-left: 4px solid #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);">
+                <p style="color: #10b981; margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600;">
+                    <span style="font-size: 1.3rem;">✓</span> Chart uploaded successfully
                 </p>
             </div>
             """, unsafe_allow_html=True)
             
-            # Upload section mejorada con diseño más atractivo
-            st.markdown("""
-            <div style="position: relative; margin: 2rem 0;">
-                <div class="upload-area" style="position: relative; z-index: 1;">
-                    <div style="font-size: 5rem; margin-bottom: 1.5rem;">📈</div>
-                    <div class="upload-text" style="font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem;">
-                        Drag & Drop Your Chart Image
-                    </div>
-                    <div class="upload-hint" style="font-size: 0.95rem;">
-                        PNG, JPG or JPEG • Max 200MB
-                    </div>
-                    <div style="margin-top: 1.5rem; color: #4a9eff; font-size: 0.85rem;">
-                        Or click to browse files
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        if uploaded_file is not None:
-            image = Image.open(uploaded_file)
-            
-            # Success message
-            st.markdown("""
-            <div style="margin: 2rem 0; padding: 1.5rem; background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%); border-radius: 12px; border-left: 4px solid #4a9eff;">
-                <h3 style="color: #4a9eff; margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.5rem;">✓</span> Chart Uploaded Successfully
-                </h3>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Show image preview mejorado
+            # Show image preview más compacto
             col_img, col_info = st.columns([2, 1])
             with col_img:
-                st.markdown("""
-                <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
-                    <h4 style="color: #ffffff; margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600;">Chart Preview</h4>
-                </div>
-                """, unsafe_allow_html=True)
                 st.image(image, use_container_width=True)
             
             with col_info:
@@ -1091,13 +1220,16 @@ if mode == "Image Analysis":
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Analyze button mejorado
+            # Analyze button - Mejorado con estilo premium
             st.markdown("""
-            <div style="margin: 2rem 0;">
+            <div style="margin: 2.5rem 0 1.5rem 0;">
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("🚀 Analyze Chart with AI", type="primary", use_container_width=True):
+            # Botón de análisis mejorado
+            analyze_button = st.button("🚀 Analyze Chart with AI", type="primary", use_container_width=True)
+            
+            if analyze_button:
                 with st.spinner("AI is analyzing the chart and detecting all trade parameters..."):
                     # Solo pasar margin mode - la AI detectará todo lo demás
                     analysis = components['image_analyzer'].analyze_chart_image(
@@ -1127,9 +1259,9 @@ if mode == "Image Analysis":
                     col_asset, col_pos, col_margin = st.columns([2, 1, 1])
                     with col_asset:
                         st.markdown(f"""
-                        <div class="asset-card">
-                            <div class="label">Asset Detected</div>
-                            <div class="symbol">{detected_symbol if detected_symbol != 'N/A' else 'Unknown'}</div>
+                        <div class="asset-card" style="border-color: #d4af37; background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%); box-shadow: 0 8px 32px rgba(212, 175, 55, 0.25);">
+                            <div class="label" style="color: #d4af37;">Asset Detected</div>
+                            <div class="symbol" style="color: #d4af37; text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);">{detected_symbol if detected_symbol != 'N/A' else 'Unknown'}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     with col_pos:
@@ -1161,13 +1293,13 @@ if mode == "Image Analysis":
                         </div>
                         """, unsafe_allow_html=True)
                     
-                    # Trading Levels con cards gráficas y colores
+                    # Trading Levels con cards gráficas y colores - Mejorado con contornos dorados
                     st.markdown("""
-                    <div style="text-align: center; margin: 3rem 0 2rem 0;">
-                        <h2 style="color: #ffffff; font-size: 2rem; font-weight: 700; margin: 0;">
+                    <div style="text-align: center; margin: 4rem 0 2.5rem 0; padding: 2rem; background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%); border-radius: 16px; border: 2px solid #d4af37; box-shadow: 0 8px 32px rgba(212, 175, 55, 0.2);">
+                        <h2 style="color: #ffffff; font-size: 2.5rem; font-weight: 700; margin: 0; letter-spacing: -1px; text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);">
                             Trading Levels
                         </h2>
-                        <p style="color: #a0a0a0; font-size: 0.95rem; margin-top: 0.5rem;">
+                        <p style="color: #d4af37; font-size: 1rem; margin-top: 0.75rem; font-weight: 500;">
                             AI-generated entry, stop loss, and take profit levels
                         </p>
                     </div>
@@ -1202,17 +1334,24 @@ if mode == "Image Analysis":
                         </div>
                         """, unsafe_allow_html=True)
                     
-                    # Métricas adicionales
-                    st.markdown("---")
+                    # Métricas adicionales - Mejoradas
+                    st.markdown("""
+                    <div style="margin: 3rem 0 2rem 0;">
+                        <div style="text-align: center; padding: 1.5rem; background: rgba(74, 158, 255, 0.05); border-radius: 12px; border: 1px solid rgba(74, 158, 255, 0.2);">
+                            <h3 style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin: 0 0 1.5rem 0;">Performance Metrics</h3>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     col_conf, col_rr = st.columns(2)
                     
                     with col_conf:
                         confidence_pct = analysis['confidence'] * 100
                         conf_color = "#10b981" if confidence_pct > 70 else "#f59e0b" if confidence_pct > 50 else "#f44336"
                         st.markdown(f"""
-                        <div class="chat-message assistant" style="text-align: center;">
-                            <h3>Confidence</h3>
-                            <p style="font-size: 1.8rem; color: {conf_color}; font-weight: 700;">{confidence_pct:.1f}%</p>
+                        <div style="padding: 2rem; background: linear-gradient(135deg, {conf_color}15 0%, {conf_color}05 100%); border-radius: 16px; border: 2px solid {conf_color}; text-align: center; box-shadow: 0 8px 25px {conf_color}30;">
+                            <div style="color: #a0a0a0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; font-weight: 600;">Confidence</div>
+                            <div style="font-size: 3rem; color: {conf_color}; font-weight: 700; font-family: 'SF Mono', monospace; text-shadow: 0 0 20px {conf_color}50;">{confidence_pct:.1f}%</div>
                         </div>
                         """, unsafe_allow_html=True)
                     
@@ -1220,25 +1359,33 @@ if mode == "Image Analysis":
                         rr_ratio = analysis.get('risk_reward_ratio', 0)
                         rr_color = "#10b981" if rr_ratio >= 2 else "#f59e0b" if rr_ratio >= 1.5 else "#f44336"
                         st.markdown(f"""
-                        <div class="chat-message assistant" style="text-align: center;">
-                            <h3>Risk:Reward</h3>
-                            <p style="font-size: 1.8rem; color: {rr_color}; font-weight: 700;">1:{rr_ratio:.2f}</p>
+                        <div style="padding: 2rem; background: linear-gradient(135deg, {rr_color}15 0%, {rr_color}05 100%); border-radius: 16px; border: 2px solid {rr_color}; text-align: center; box-shadow: 0 8px 25px {rr_color}30;">
+                            <div style="color: #a0a0a0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; font-weight: 600;">Risk:Reward</div>
+                            <div style="font-size: 3rem; color: {rr_color}; font-weight: 700; font-family: 'SF Mono', monospace; text-shadow: 0 0 20px {rr_color}50;">1:{rr_ratio:.2f}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     
-                    # Pattern y análisis detallado
-                    st.markdown("---")
-                    st.markdown(f"""
-                    <div class="chat-message assistant">
-                        <h3>Pattern Detected</h3>
-                        <p><span class="value">{analysis['pattern_detected']}</span></p>
+                    # Pattern y análisis detallado - Mejorados
+                    st.markdown("""
+                    <div style="margin: 3rem 0 2rem 0;">
                     </div>
                     """, unsafe_allow_html=True)
                     
                     st.markdown(f"""
-                    <div class="chat-message assistant">
-                        <h3>Detailed Analysis</h3>
-                        <p>{analysis['analysis']}</p>
+                    <div style="padding: 2rem; background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%); border-radius: 16px; border-left: 4px solid #4a9eff; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(74, 158, 255, 0.2);">
+                        <h3 style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🔍</span> Pattern Detected
+                        </h3>
+                        <p style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0; font-family: 'SF Mono', monospace;"><span class="value">{analysis['pattern_detected']}</span></p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown(f"""
+                    <div style="padding: 2rem; background: #1a1a1a; border-radius: 16px; border: 1px solid #333; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <h3 style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>📊</span> Detailed Analysis
+                        </h3>
+                        <p style="color: #d0d0d0; font-size: 1rem; line-height: 1.8; margin: 0;">{analysis['analysis']}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -1254,89 +1401,99 @@ if mode == "Image Analysis":
                         'leverage': analysis_leverage
                     }
                     
-                    # Register trade button
-                    if st.button("Register Trade", use_container_width=True, type="primary"):
-                        if 'last_analysis' in st.session_state:
-                            analysis_data = st.session_state['last_analysis']
-                            analysis = analysis_data['analysis']
-                            
-                            # Usar el tipo de posición del análisis
-                            side = analysis_data.get('position_type', 'long').lower()
-                            
-                            # Calcular cantidad basada en riesgo
-                            entry = analysis['entry_price']
-                            stop = analysis['stop_loss']
-                            risk_amount = components['risk_manager'].current_capital * 0.02
-                            quantity = components['risk_manager'].calculate_position_size(entry, stop, risk_amount)
-                            
-                            try:
-                                # Guardar el trade en el journal
-                                trade_id = components['journal'].add_trade(
-                                    symbol=analysis_data['symbol'] or "N/A",
-                                    side=side,
-                                    entry_price=entry,
-                                    quantity=quantity,
-                                    stop_loss=stop,
-                                    take_profit=analysis['take_profit'],
-                                    strategy=analysis_data['strategy'],
-                                    notes=analysis_data['notes'],
-                                    image_analysis=analysis
-                                )
-                                
-                                # Recargar el journal para asegurar que el trade esté en memoria
-                                # Esto actualiza las estadísticas inmediatamente
-                                components['journal'].trades = components['journal']._load_journal()
-                                
-                                # Forzar actualización del journal en el componente cacheado
-                                # El journal se recarga automáticamente, pero necesitamos asegurar
-                                # que las estadísticas se calculen con los datos actualizados
-                                
-                                # Verificar que el trade se guardó correctamente
-                                saved_trade = next((t for t in components['journal'].trades if t['id'] == trade_id), None)
-                                
-                                if saved_trade:
-                                    st.markdown(f"""
-                                    <div class="chat-message assistant" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
-                                        <h3>✅ Trade Registered Successfully</h3>
-                                        <p>Trade ID: <span class="value">{trade_id}</span></p>
-                                        <p style="margin-top: 0.5rem; color: #a0a0a0; font-size: 0.9rem;">
-                                            Trade saved to journal. Statistics updated.
-                                        </p>
-                                        <p style="margin-top: 0.5rem; color: #10b981; font-size: 0.85rem; font-weight: 600;">
-                                            Symbol: {saved_trade['symbol']} | Side: {saved_trade['side'].upper()} | Entry: {format_price(saved_trade['entry_price'])}
-                                        </p>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                                    
-                                    # Mostrar estadísticas actualizadas
-                                    updated_stats = components['journal'].get_statistics()
-                                    st.markdown(f"""
-                                    <div class="chat-message assistant" style="opacity: 0.9; margin-top: 1rem;">
-                                        <p style="font-size: 0.9rem; color: #a0a0a0;">
-                                            <strong>Updated Statistics:</strong> Total Trades: {updated_stats['total_trades']} | Open: {updated_stats['open_trades']}
-                                        </p>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                                else:
-                                    st.error("⚠️ Trade saved but could not verify. Please check the journal.")
-                                
-                            except Exception as e:
-                                st.error(f"❌ Error saving trade: {str(e)}")
-                                logger.error(f"Error saving trade: {str(e)}")
-                            
-                            # Limpiar todos los datos del análisis para preparar la siguiente imagen
-                            if 'last_analysis' in st.session_state:
-                                del st.session_state['last_analysis']
-                            
-                            # Limpiar la imagen subida y el análisis actual
-                            if 'current_uploaded_file' in st.session_state:
-                                del st.session_state['current_uploaded_file']
-                            
-                            # Marcar que se registró el trade para limpiar la interfaz
-                            st.session_state['trade_registered'] = True
-                            
-                            # Forzar rerun para actualizar estadísticas y limpiar la interfaz
-                            st.rerun()
+                    # Share section - Mejorada y más atractiva
+                    st.markdown("""
+                    <div style="margin: 3rem 0 2rem 0; padding: 2rem; background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); border-radius: 16px; border: 2px solid rgba(74, 158, 255, 0.3);">
+                        <h3 style="color: #ffffff; margin: 0 0 0.5rem 0; font-size: 1.5rem; font-weight: 700; text-align: center; letter-spacing: -0.5px;">
+                            📤 Share Your Analysis
+                        </h3>
+                        <p style="color: #a0a0a0; text-align: center; font-size: 0.9rem; margin: 0.5rem 0 1.5rem 0;">
+                            Share your trading analysis with friends and colleagues
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Generate share message
+                    share_message = generate_share_message(analysis)
+                    
+                    # Share buttons in columns - Mejorados con efectos
+                    col_whatsapp, col_telegram, col_twitter = st.columns(3)
+                    
+                    with col_whatsapp:
+                        whatsapp_url = f"https://wa.me/?text={share_message.replace(chr(10), '%0A').replace(' ', '%20')}"
+                        st.markdown(f"""
+                        <a href="{whatsapp_url}" target="_blank" style="text-decoration: none; display: block;">
+                            <div style="padding: 1.5rem; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 12px; text-align: center; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); position: relative; overflow: hidden;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📱</div>
+                                <div style="font-size: 1.1rem; letter-spacing: 0.5px;">WhatsApp</div>
+                                <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s;"></div>
+                            </div>
+                        </a>
+                        <style>
+                            a[href*="wa.me"] > div:hover {{
+                                transform: translateY(-4px);
+                                box-shadow: 0 8px 25px rgba(37, 211, 102, 0.5);
+                            }}
+                            a[href*="wa.me"] > div:hover > div:last-child {{
+                                left: 100%;
+                            }}
+                        </style>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_telegram:
+                        telegram_url = f"https://t.me/share/url?url=&text={share_message.replace(chr(10), '%0A').replace(' ', '%20')}"
+                        st.markdown(f"""
+                        <a href="{telegram_url}" target="_blank" style="text-decoration: none; display: block;">
+                            <div style="padding: 1.5rem; background: linear-gradient(135deg, #0088cc 0%, #005f8c 100%); border-radius: 12px; text-align: center; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3); position: relative; overflow: hidden;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">✈️</div>
+                                <div style="font-size: 1.1rem; letter-spacing: 0.5px;">Telegram</div>
+                                <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s;"></div>
+                            </div>
+                        </a>
+                        <style>
+                            a[href*="t.me"] > div:hover {{
+                                transform: translateY(-4px);
+                                box-shadow: 0 8px 25px rgba(0, 136, 204, 0.5);
+                            }}
+                            a[href*="t.me"] > div:hover > div:last-child {{
+                                left: 100%;
+                            }}
+                        </style>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_twitter:
+                        twitter_url = f"https://twitter.com/intent/tweet?text={share_message.replace(chr(10), '%0A').replace(' ', '%20')}"
+                        st.markdown(f"""
+                        <a href="{twitter_url}" target="_blank" style="text-decoration: none; display: block;">
+                            <div style="padding: 1.5rem; background: linear-gradient(135deg, #1DA1F2 0%, #0d8bd9 100%); border-radius: 12px; text-align: center; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px rgba(29, 161, 242, 0.3); position: relative; overflow: hidden;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🐦</div>
+                                <div style="font-size: 1.1rem; letter-spacing: 0.5px;">Twitter</div>
+                                <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s;"></div>
+                            </div>
+                        </a>
+                        <style>
+                            a[href*="twitter.com"] > div:hover {{
+                                transform: translateY(-4px);
+                                box-shadow: 0 8px 25px rgba(29, 161, 242, 0.5);
+                            }}
+                            a[href*="twitter.com"] > div:hover > div:last-child {{
+                                left: 100%;
+                            }}
+                        </style>
+                        """, unsafe_allow_html=True)
+                    
+                    # Copy to clipboard option - Mejorado
+                    st.markdown("""
+                    <div style="margin: 2rem 0;">
+                        <div style="text-align: center; padding: 1.5rem; background: rgba(74, 158, 255, 0.05); border-radius: 12px; border: 1px dashed rgba(74, 158, 255, 0.3);">
+                            <p style="color: #a0a0a0; font-size: 0.9rem; margin: 0 0 1rem 0;">Or copy the message manually</p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button("📋 Copy Message to Clipboard", use_container_width=True, key="copy_message", type="secondary"):
+                        st.code(share_message, language=None)
+                        st.success("✅ Message copied! You can now paste it anywhere.")
         
         # Show plan usage
         if plan_info['analyses_per_day'] > 0:
@@ -1346,110 +1503,6 @@ if mode == "Image Analysis":
                 <p style="font-size: 0.85rem;">Analyses remaining today: {remaining} of {plan_info['analyses_per_day']}</p>
             </div>
             """, unsafe_allow_html=True)
-
-elif mode == "Trading Journal":
-    st.markdown("""
-    <div class="premium-card">
-        <h2 style='color: #1e3c72; margin-top: 0;'>Trading Journal</h2>
-        <p style='color: #666;'>Manage and analyze all your trading operations professionally</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Improved filters
-    st.markdown("### Search Filters")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        filter_symbol = st.selectbox(
-            "Symbol",
-            ["All"] + list(set(t['symbol'] for t in components['journal'].trades)),
-            help="Filter by asset symbol"
-        )
-    with col2:
-        filter_status = st.selectbox(
-            "Status",
-            ["All", "open", "closed", "cancelled"],
-            help="Filter by trade status"
-        )
-    with col3:
-        show_stats = st.checkbox("Show Statistics", value=True)
-    
-    # Get filtered trades
-    trades = components['journal'].get_trades(
-        symbol=None if filter_symbol == "All" else filter_symbol,
-        status=None if filter_status == "All" else filter_status
-    )
-    
-    if show_stats:
-        stats = components['journal'].get_statistics()
-        
-        st.markdown("### General Statistics")
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            st.metric("Total", stats['total_trades'])
-        with col2:
-            st.metric("Open", stats['open_trades'])
-        with col3:
-            st.metric("Closed", stats['closed_trades'])
-        with col4:
-            win_color = "🟢" if stats['win_rate'] > 50 else "🟡" if stats['win_rate'] > 30 else "🔴"
-            st.metric("Win Rate", f"{win_color} {stats['win_rate']:.1f}%")
-        with col5:
-            pnl_color = "🟢" if stats['total_pnl'] > 0 else "🔴" if stats['total_pnl'] < 0 else "⚪"
-            st.metric("Total P&L", f"{pnl_color} ${stats['total_pnl']:,.2f}", 
-                     delta=f"{stats['total_pnl']:+,.2f}" if stats['total_pnl'] != 0 else None)
-        
-        st.markdown("---")
-    
-    # Improved trades table
-    if trades:
-        st.markdown("### Trades List")
-        # Prepare data for table
-        table_data = []
-        for trade in trades:
-            status_emoji = "🟢" if trade['status'] == 'open' else "✅" if trade['status'] == 'closed' else "❌"
-            # Usar el precio de entrada como referencia para determinar decimales
-            entry_price = trade['entry_price']
-            table_data.append({
-                'ID': trade['id'],
-                'Symbol': trade['symbol'],
-                'Side': '📈 Long' if trade['side'] == 'long' else '📉 Short',
-                'Entry': format_price(entry_price),
-                'Quantity': f"{trade['quantity']:.4f}",
-                'Stop Loss': format_price(trade['stop_loss']) if trade['stop_loss'] else "N/A",
-                'Take Profit': format_price(trade['take_profit']) if trade['take_profit'] else "N/A",
-                'Status': f"{status_emoji} {trade['status'].title()}",
-                'P&L': format_price(trade['pnl']) if trade['pnl'] is not None else "N/A",
-                'Date': datetime.fromisoformat(trade['entry_time']).strftime("%Y-%m-%d %H:%M")
-            })
-        
-        df = pd.DataFrame(table_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
-        
-        # Selected trade details
-        if len(trades) > 0:
-            st.markdown("### Selected Trade Details")
-            selected_id = st.selectbox(
-                "Select a trade to view full details",
-                [t['id'] for t in trades],
-                label_visibility="visible"
-            )
-            
-            selected_trade = next(t for t in trades if t['id'] == selected_id)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("#### General Information")
-                st.json(selected_trade, expanded=True)
-            with col2:
-                if selected_trade.get('image_analysis'):
-                    st.markdown("#### Image Analysis")
-                    st.json(selected_trade['image_analysis'], expanded=True)
-    else:
-        st.info("""
-        **No trades registered yet**
-        
-        Use the **"Image Analysis"** section to create your first trade.
-        """)
 
 elif mode == "Plans & Subscription":
     st.markdown("""
@@ -1633,16 +1686,28 @@ elif mode == "Plans & Subscription":
         elif query_params['payment'] == 'cancelled':
             st.info("ℹ️ Payment cancelled. No charge was made.")
 
-# Improved premium footer
+# Footer con créditos
 st.markdown("""
-<div class="footer-premium">
-    <h3>Trading AI Pro</h3>
-    <p>Professional Trading System with Artificial Intelligence</p>
-    <p style='font-size: 0.9rem; color: rgba(255,255,255,0.8);'>
-        Developed for professional traders | Premium Version 2024
-    </p>
-    <p style='font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 1rem;'>
-        © 2024 Trading AI Pro. All rights reserved.
-    </p>
+<div style="margin-top: 4rem; padding: 2rem 0; border-top: 1px solid #333; text-align: center;">
+    <div style="margin-bottom: 1rem;">
+        <h3 style="color: #ffffff; font-size: 1.2rem; margin: 0 0 0.5rem 0;">Trading AI Pro</h3>
+        <p style="color: #a0a0a0; font-size: 0.9rem; margin: 0;">Professional Trading System with Artificial Intelligence</p>
+    </div>
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #2a2a2a;">
+        <p style="color: #666; font-size: 0.85rem; margin: 0.5rem 0;">
+            Made with ❤️ by <strong style="color: #4a9eff;">marxmad</strong>
+        </p>
+        <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap;">
+            <a href="https://github.com/MarxMad" target="_blank" style="color: #4a9eff; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; transition: color 0.3s;">
+                <span>🔗</span> GitHub
+            </a>
+            <a href="https://x.com/gerapedrizco" target="_blank" style="color: #4a9eff; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; transition: color 0.3s;">
+                <span>🐦</span> X (Twitter)
+            </a>
+        </div>
+        <p style="color: #555; font-size: 0.75rem; margin-top: 1.5rem;">
+            © 2024 Trading AI Pro. All rights reserved.
+        </p>
+    </div>
 </div>
 """, unsafe_allow_html=True)
