@@ -90,54 +90,71 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* Header - Tech Style - Asegurar visibilidad */
+    /* Header - Tech Style - Asegurar visibilidad completa */
     header[data-testid="stHeader"] {
         background: #1a1a1a !important;
         border-bottom: 1px solid #333 !important;
         padding: 1rem 2rem !important;
         visibility: visible !important;
-        display: flex !important;
+        display: block !important;
         height: auto !important;
         min-height: 3.5rem !important;
         position: relative !important;
         z-index: 999 !important;
         opacity: 1 !important;
+        width: 100% !important;
     }
     
-    header[data-testid="stHeader"] * {
-        visibility: visible !important;
-        display: block !important;
-    }
-    
-    header[data-testid="stHeader"] .css-1v0mbdj {
-        color: white !important;
-        visibility: visible !important;
-    }
-    
-    /* Menú hamburguesa visible */
-    [data-testid="stHeader"] button {
-        color: white !important;
-        visibility: visible !important;
-    }
-    
-    /* Asegurar que el menú no se corte */
-    [data-testid="stHeader"] > div {
+    /* Contenedor principal del header */
+    header[data-testid="stHeader"] > div {
         visibility: visible !important;
         display: flex !important;
+        align-items: center !important;
         width: 100% !important;
+        height: 100% !important;
         overflow: visible !important;
+    }
+    
+    /* Título del header */
+    header[data-testid="stHeader"] .css-1v0mbdj,
+    header[data-testid="stHeader"] h1,
+    header[data-testid="stHeader"] a {
+        color: white !important;
+        visibility: visible !important;
+        display: inline-block !important;
+    }
+    
+    /* Menú hamburguesa y botones visibles */
+    [data-testid="stHeader"] button,
+    [data-testid="stHeader"] [data-baseweb="button"],
+    [data-testid="stHeader"] [role="button"] {
+        color: white !important;
+        visibility: visible !important;
+        display: inline-flex !important;
+        opacity: 1 !important;
+        background: transparent !important;
+        border: none !important;
     }
     
     /* Menú de Streamlit visible */
     #MainMenu {
         visibility: visible !important;
         display: block !important;
+        opacity: 1 !important;
     }
     
-    /* Botones del header visibles */
-    [data-testid="stHeader"] [data-baseweb="button"] {
+    /* Asegurar que los elementos del menú sean visibles */
+    [data-testid="stHeader"] svg,
+    [data-testid="stHeader"] path {
+        fill: white !important;
         visibility: visible !important;
-        color: white !important;
+        opacity: 1 !important;
+    }
+    
+    /* Toolbar de Streamlit */
+    [data-testid="stToolbar"] {
+        visibility: visible !important;
+        display: flex !important;
     }
     
     /* Estilos generales - Tech Dark Theme */
@@ -846,6 +863,43 @@ def init_components():
 
 components = init_components()
 
+# Función helper para formatear precios con decimales apropiados
+def format_price(price: float, min_decimals: int = 2, max_decimals: int = 8) -> str:
+    """
+    Formatea un precio con el número apropiado de decimales basado en su valor.
+    
+    Args:
+        price: Precio a formatear
+        min_decimals: Mínimo de decimales a mostrar
+        max_decimals: Máximo de decimales a mostrar
+        
+    Returns:
+        String formateado del precio
+    """
+    if price == 0:
+        return "$0.00"
+    
+    # Determinar número de decimales basado en el precio
+    if price < 0.0001:
+        decimals = max_decimals  # Para precios muy pequeños (ej: $0.00001)
+    elif price < 0.01:
+        decimals = 6  # Para precios pequeños (ej: $0.03)
+    elif price < 1:
+        decimals = 4  # Para precios menores a 1 (ej: $0.50)
+    elif price < 1000:
+        decimals = 2  # Para precios normales (ej: $100)
+    else:
+        decimals = 2  # Para precios altos (ej: $5000)
+    
+    # Asegurar que esté entre min y max
+    decimals = max(min_decimals, min(decimals, max_decimals))
+    
+    # Formatear con separadores de miles si es necesario
+    if price >= 1000:
+        return f"${price:,.{decimals}f}"
+    else:
+        return f"${price:.{decimals}f}"
+
 # Obtener plan del usuario
 user_plan = get_user_plan()
 plan_info = get_plan_limits(user_plan)
@@ -912,11 +966,21 @@ if mode == "Image Analysis":
         </div>
         """, unsafe_allow_html=True)
     else:
+        # Limpiar estado si se registró un trade
+        if st.session_state.get('trade_registered', False):
+            # Limpiar todos los estados relacionados
+            if 'last_analysis' in st.session_state:
+                del st.session_state['last_analysis']
+            if 'current_uploaded_file' in st.session_state:
+                del st.session_state['current_uploaded_file']
+            st.session_state['trade_registered'] = False
+        
         uploaded_file = st.file_uploader(
             "Upload chart image",
             type=['png', 'jpg', 'jpeg'],
             help="PNG, JPG or JPEG format",
-            label_visibility="visible"
+            label_visibility="visible",
+            key="chart_image_uploader"
         )
         
         # Mostrar header y upload area solo si no hay imagen subida
@@ -977,23 +1041,14 @@ if mode == "Image Analysis":
             with col_info:
                 st.markdown("""
                 <div class="chat-message user" style="margin-bottom: 1.5rem;">
-                    <h3>Trade Information</h3>
+                    <h3>Trade Configuration</h3>
                     <p style="font-size: 0.85rem; color: #a0a0a0; margin-top: 0.5rem; line-height: 1.5;">
-                        Configure your trade before analysis
+                        AI will automatically detect position type, leverage, symbol, and strategy from the chart
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Position type selector - IMPORTANTE
-                position_type = st.selectbox(
-                    "Position Type",
-                    ["Long", "Short"],
-                    label_visibility="visible",
-                    help="Select if this is a Long (buy) or Short (sell) position",
-                    index=0
-                )
-                
-                # Margin mode selector for futures
+                # Solo margin mode - todo lo demás lo detecta la AI
                 margin_mode = st.selectbox(
                     "Margin Mode",
                     ["Cross Margin", "Isolated Margin"],
@@ -1002,34 +1057,18 @@ if mode == "Image Analysis":
                     index=0
                 )
                 
-                # Leverage selector
-                leverage = st.selectbox(
-                    "Leverage",
-                    ["1x", "2x", "3x", "5x", "10x", "20x", "25x", "50x", "100x"],
-                    label_visibility="visible",
-                    help="Leverage multiplier. Higher leverage = higher risk. AI will adjust stop loss and take profit accordingly",
-                    index=0
-                )
-                
-                symbol = st.text_input(
-                    "Symbol", 
-                    placeholder="BTC/USDT, AAPL, EUR/USD",
-                    label_visibility="visible",
-                    help="Asset symbol (will be auto-detected if empty)"
-                )
-                strategy = st.text_input(
-                    "Strategy", 
-                    placeholder="Breakout, Reversal, Trend",
-                    label_visibility="visible",
-                    help="Trading strategy type"
-                )
-                notes = st.text_area(
-                    "Notes", 
-                    placeholder="Additional observations...",
-                    height=80,
-                    label_visibility="visible",
-                    help="Any additional notes about this trade"
-                )
+                st.markdown("""
+                <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(74, 158, 255, 0.1); border-radius: 8px; border-left: 3px solid #4a9eff;">
+                    <p style="font-size: 0.85rem; color: #a0a0a0; margin: 0; line-height: 1.5;">
+                        <strong style="color: #4a9eff;">AI Auto-Detection:</strong><br>
+                        • Position Type (Long/Short)<br>
+                        • Optimal Leverage<br>
+                        • Asset Symbol<br>
+                        • Trading Strategy<br>
+                        • Entry, Stop Loss & Take Profit
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
             
             # Check if Gemini is being used (safe access for cached objects)
             try:
@@ -1059,32 +1098,28 @@ if mode == "Image Analysis":
             """, unsafe_allow_html=True)
             
             if st.button("🚀 Analyze Chart with AI", type="primary", use_container_width=True):
-                with st.spinner("Analyzing chart with AI..."):
-                    # Extraer valor numérico del leverage (ej: "10x" -> 10)
-                    leverage_value = int(leverage.replace('x', ''))
-                    
-                    # Pasar el tipo de posición, margin mode y leverage al análisis
+                with st.spinner("AI is analyzing the chart and detecting all trade parameters..."):
+                    # Solo pasar margin mode - la AI detectará todo lo demás
                     analysis = components['image_analyzer'].analyze_chart_image(
                         image, 
-                        symbol if symbol else None, 
-                        position_type.lower(),
+                        None,  # La AI detectará el símbolo
+                        None,  # La AI determinará el tipo de posición
                         margin_mode.lower().replace(' ', '_'),
-                        leverage_value
+                        None  # La AI recomendará el leverage
                     )
                     
                     # Incrementar contador
                     st.session_state['analyses_today'] = analyses_today + 1
                     
-                    # Detectar símbolo (del análisis o del input)
-                    detected_symbol = analysis.get('symbol_detected', symbol if symbol else 'N/A')
-                    if detected_symbol and detected_symbol != 'N/A':
-                        # Actualizar el input con el símbolo detectado
-                        symbol = detected_symbol
+                    # Guardar la imagen en sesión para que persista después del análisis
+                    st.session_state['current_uploaded_file'] = uploaded_file
                     
-                    # Obtener tipo de posición, margin mode y leverage del análisis
-                    analysis_position = analysis.get('position_type', position_type).upper()
+                    # Obtener todos los valores detectados por la AI
+                    detected_symbol = analysis.get('symbol_detected', 'N/A')
+                    analysis_position = analysis.get('position_type', 'long').upper()
                     analysis_margin = analysis.get('margin_mode', margin_mode.lower().replace(' ', '_'))
-                    analysis_leverage = analysis.get('leverage', leverage_value)
+                    analysis_leverage = analysis.get('recommended_leverage', analysis.get('leverage', 10))
+                    detected_strategy = analysis.get('trading_strategy', 'Not specified')
                     position_color = "#10b981" if analysis_position == "LONG" else "#f44336"
                     position_icon = "📈" if analysis_position == "LONG" else "📉"
                     
@@ -1118,10 +1153,11 @@ if mode == "Image Analysis":
                     # Mostrar precio actual si está disponible
                     current_price = analysis.get('current_price_read', 0)
                     if current_price > 0:
+                        formatted_current = format_price(current_price)
                         st.markdown(f"""
                         <div class="chat-message assistant" style="text-align: center;">
                             <h3>Current Price</h3>
-                            <p style="font-size: 1.5rem; color: #4a9eff; font-weight: 700; font-family: 'SF Mono', monospace;">${current_price:,.2f}</p>
+                            <p style="font-size: 1.5rem; color: #4a9eff; font-weight: 700; font-family: 'SF Mono', monospace;">{formatted_current}</p>
                         </div>
                         """, unsafe_allow_html=True)
                     
@@ -1140,26 +1176,29 @@ if mode == "Image Analysis":
                     col_entry, col_stop, col_take = st.columns(3)
                     
                     with col_entry:
+                        formatted_entry = format_price(analysis['entry_price'])
                         st.markdown(f"""
                         <div class="trading-level-card entry">
                             <div class="label">Entry Price</div>
-                            <div class="price">${analysis['entry_price']:,.2f}</div>
+                            <div class="price">{formatted_entry}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     
                     with col_stop:
+                        formatted_stop = format_price(analysis['stop_loss'])
                         st.markdown(f"""
                         <div class="trading-level-card stop-loss">
                             <div class="label">Stop Loss</div>
-                            <div class="price">${analysis['stop_loss']:,.2f}</div>
+                            <div class="price">{formatted_stop}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     
                     with col_take:
+                        formatted_take = format_price(analysis['take_profit'])
                         st.markdown(f"""
                         <div class="trading-level-card take-profit">
                             <div class="label">Take Profit</div>
-                            <div class="price">${analysis['take_profit']:,.2f}</div>
+                            <div class="price">{formatted_take}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     
@@ -1203,14 +1242,16 @@ if mode == "Image Analysis":
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Guardar en sesión para registro
+                    # Guardar en sesión para registro - todo viene de la AI
                     st.session_state['last_analysis'] = {
                         'analysis': analysis,
-                        'symbol': symbol,
-                        'strategy': strategy,
-                        'notes': notes,
-                        'image': uploaded_file,
-                        'position_type': position_type
+                        'symbol': detected_symbol,
+                        'strategy': detected_strategy,
+                        'notes': f"AI Auto-detected: {detected_strategy} strategy",
+                        'image': st.session_state.get('current_uploaded_file', uploaded_file),
+                        'position_type': analysis_position.lower(),
+                        'margin_mode': margin_mode,
+                        'leverage': analysis_leverage
                     }
                     
                     # Register trade button
@@ -1228,26 +1269,74 @@ if mode == "Image Analysis":
                             risk_amount = components['risk_manager'].current_capital * 0.02
                             quantity = components['risk_manager'].calculate_position_size(entry, stop, risk_amount)
                             
-                            trade_id = components['journal'].add_trade(
-                                symbol=analysis_data['symbol'] or "N/A",
-                                side=side,
-                                entry_price=entry,
-                                quantity=quantity,
-                                stop_loss=stop,
-                                take_profit=analysis['take_profit'],
-                                strategy=analysis_data['strategy'],
-                                notes=analysis_data['notes'],
-                                image_analysis=analysis
-                            )
+                            try:
+                                # Guardar el trade en el journal
+                                trade_id = components['journal'].add_trade(
+                                    symbol=analysis_data['symbol'] or "N/A",
+                                    side=side,
+                                    entry_price=entry,
+                                    quantity=quantity,
+                                    stop_loss=stop,
+                                    take_profit=analysis['take_profit'],
+                                    strategy=analysis_data['strategy'],
+                                    notes=analysis_data['notes'],
+                                    image_analysis=analysis
+                                )
+                                
+                                # Recargar el journal para asegurar que el trade esté en memoria
+                                # Esto actualiza las estadísticas inmediatamente
+                                components['journal'].trades = components['journal']._load_journal()
+                                
+                                # Forzar actualización del journal en el componente cacheado
+                                # El journal se recarga automáticamente, pero necesitamos asegurar
+                                # que las estadísticas se calculen con los datos actualizados
+                                
+                                # Verificar que el trade se guardó correctamente
+                                saved_trade = next((t for t in components['journal'].trades if t['id'] == trade_id), None)
+                                
+                                if saved_trade:
+                                    st.markdown(f"""
+                                    <div class="chat-message assistant" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+                                        <h3>✅ Trade Registered Successfully</h3>
+                                        <p>Trade ID: <span class="value">{trade_id}</span></p>
+                                        <p style="margin-top: 0.5rem; color: #a0a0a0; font-size: 0.9rem;">
+                                            Trade saved to journal. Statistics updated.
+                                        </p>
+                                        <p style="margin-top: 0.5rem; color: #10b981; font-size: 0.85rem; font-weight: 600;">
+                                            Symbol: {saved_trade['symbol']} | Side: {saved_trade['side'].upper()} | Entry: {format_price(saved_trade['entry_price'])}
+                                        </p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    # Mostrar estadísticas actualizadas
+                                    updated_stats = components['journal'].get_statistics()
+                                    st.markdown(f"""
+                                    <div class="chat-message assistant" style="opacity: 0.9; margin-top: 1rem;">
+                                        <p style="font-size: 0.9rem; color: #a0a0a0;">
+                                            <strong>Updated Statistics:</strong> Total Trades: {updated_stats['total_trades']} | Open: {updated_stats['open_trades']}
+                                        </p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                else:
+                                    st.error("⚠️ Trade saved but could not verify. Please check the journal.")
+                                
+                            except Exception as e:
+                                st.error(f"❌ Error saving trade: {str(e)}")
+                                logger.error(f"Error saving trade: {str(e)}")
                             
-                            st.markdown(f"""
-                            <div class="chat-message assistant" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
-                                <h3>Trade Registered</h3>
-                                <p>Trade ID: <span class="value">{trade_id}</span></p>
-                                <p style="margin-top: 0.5rem; color: #a0a0a0; font-size: 0.9rem;">Trade successfully saved to your journal</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            del st.session_state['last_analysis']
+                            # Limpiar todos los datos del análisis para preparar la siguiente imagen
+                            if 'last_analysis' in st.session_state:
+                                del st.session_state['last_analysis']
+                            
+                            # Limpiar la imagen subida y el análisis actual
+                            if 'current_uploaded_file' in st.session_state:
+                                del st.session_state['current_uploaded_file']
+                            
+                            # Marcar que se registró el trade para limpiar la interfaz
+                            st.session_state['trade_registered'] = True
+                            
+                            # Forzar rerun para actualizar estadísticas y limpiar la interfaz
+                            st.rerun()
         
         # Show plan usage
         if plan_info['analyses_per_day'] > 0:
@@ -1318,16 +1407,18 @@ elif mode == "Trading Journal":
         table_data = []
         for trade in trades:
             status_emoji = "🟢" if trade['status'] == 'open' else "✅" if trade['status'] == 'closed' else "❌"
+            # Usar el precio de entrada como referencia para determinar decimales
+            entry_price = trade['entry_price']
             table_data.append({
                 'ID': trade['id'],
                 'Symbol': trade['symbol'],
                 'Side': '📈 Long' if trade['side'] == 'long' else '📉 Short',
-                'Entry': f"${trade['entry_price']:,.2f}",
+                'Entry': format_price(entry_price),
                 'Quantity': f"{trade['quantity']:.4f}",
-                'Stop Loss': f"${trade['stop_loss']:,.2f}" if trade['stop_loss'] else "N/A",
-                'Take Profit': f"${trade['take_profit']:,.2f}" if trade['take_profit'] else "N/A",
+                'Stop Loss': format_price(trade['stop_loss']) if trade['stop_loss'] else "N/A",
+                'Take Profit': format_price(trade['take_profit']) if trade['take_profit'] else "N/A",
                 'Status': f"{status_emoji} {trade['status'].title()}",
-                'P&L': f"${trade['pnl']:,.2f}" if trade['pnl'] is not None else "N/A",
+                'P&L': format_price(trade['pnl']) if trade['pnl'] is not None else "N/A",
                 'Date': datetime.fromisoformat(trade['entry_time']).strftime("%Y-%m-%d %H:%M")
             })
         

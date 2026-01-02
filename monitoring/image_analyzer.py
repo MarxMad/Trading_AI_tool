@@ -76,9 +76,9 @@ class ImageAnalyzer:
         self,
         image: Image.Image,
         symbol: Optional[str] = None,
-        position_type: str = "long",
+        position_type: Optional[str] = None,
         margin_mode: str = "cross_margin",
-        leverage: int = 1
+        leverage: Optional[int] = None
     ) -> Dict:
         """
         Analiza una imagen de gráfico de trading y sugiere niveles.
@@ -113,53 +113,46 @@ class ImageAnalyzer:
     ) -> Dict:
         """Analiza usando Google Gemini Vision."""
         try:
-            # Preparar prompt mejorado y más específico
-            symbol_context = f" for {symbol}" if symbol else ""
-            position_context = f" This is a {position_type.upper()} position." if position_type else ""
+            # Preparar prompt mejorado - AI detecta TODO automáticamente
             margin_context = f" Margin Mode: {margin_mode.replace('_', ' ').title()}"
-            leverage_context = f" Leverage: {leverage}x"
             
-            # Calcular ajustes según leverage
-            # Con mayor leverage, necesitamos stops más ajustados
-            if leverage >= 50:
-                stop_pct = 0.5  # 0.5% para leverage muy alto
-                min_rr = 3.0  # Risk:Reward mínimo 1:3
-            elif leverage >= 20:
-                stop_pct = 1.0  # 1% para leverage alto
-                min_rr = 2.5
-            elif leverage >= 10:
-                stop_pct = 1.5  # 1.5% para leverage medio-alto
-                min_rr = 2.0
-            elif leverage >= 5:
-                stop_pct = 2.0  # 2% para leverage medio
-                min_rr = 2.0
-            else:
-                stop_pct = 2.5  # 2.5% para leverage bajo
-                min_rr = 2.0
-            
-            prompt = f"""You are a professional trading chart analyst specializing in futures trading. Analyze this trading chart image{symbol_context} and provide precise trading levels.{position_context}{margin_context}{leverage_context}
+            prompt = f"""You are an expert AI trading analyst. Analyze this trading chart image and AUTOMATICALLY DETECT AND PROVIDE all trading parameters. The user has selected {margin_context}. You must determine everything else from the chart.
 
-FIRST STEP - IDENTIFY THE ASSET:
-1. Look at the chart and identify what asset/symbol is being traded (e.g., ETH, BTC, AAPL, EUR/USD)
-2. Read the symbol name from the chart title, labels, or any visible text
-3. If you can see the symbol, include it in your response
+AUTOMATIC DETECTION REQUIRED - YOU MUST DETERMINE:
 
-CRITICAL INSTRUCTIONS - LEVERAGE ADJUSTED:
-1. FIRST: Read the ACTUAL CURRENT PRICE displayed on the chart. Look for price labels, current price indicators, or price axis values.
-2. Identify visible technical patterns (support, resistance, trend lines, chart patterns)
-3. IMPORTANT - LEVERAGE CONSIDERATION: This trade uses {leverage}x leverage. With higher leverage, you MUST use tighter stop losses to prevent liquidation.
-4. Based on the CURRENT PRICE, POSITION TYPE ({position_type.upper()}), and LEVERAGE ({leverage}x), suggest:
-   - Entry price: Should be close to current price or a nearby support/resistance level
-   - Stop Loss (CRITICAL with {leverage}x leverage): 
-     * For LONG: Approximately {stop_pct}% BELOW entry price (tighter stop due to {leverage}x leverage)
-     * For SHORT: Approximately {stop_pct}% ABOVE entry price (tighter stop due to {leverage}x leverage)
-     * With {leverage}x leverage, a {stop_pct}% move against you can cause significant losses or liquidation
-   - Take Profit: 
-     * For LONG: At least {min_rr}x the risk distance ABOVE entry (minimum {min_rr}:1 risk:reward ratio)
-     * For SHORT: At least {min_rr}x the risk distance BELOW entry (minimum {min_rr}:1 risk:reward ratio)
-     * With {leverage}x leverage, aim for higher reward to justify the risk
-5. Calculate confidence level (0-100%) - consider that higher leverage increases risk
-6. Provide detailed reasoning including leverage risk considerations
+1. ASSET SYMBOL: Identify the asset being traded (e.g., ETH/USDT, BTC/USDT, AAPL, EUR/USD) from chart labels, title, or visible text.
+
+2. POSITION TYPE: Analyze the chart pattern and determine if this should be a LONG (buy) or SHORT (sell) position based on:
+   - Trend direction (uptrend = Long, downtrend = Short)
+   - Support/resistance levels
+   - Chart patterns (breakouts, reversals, etc.)
+   - Technical indicators visible on the chart
+
+3. OPTIMAL LEVERAGE: Recommend the best leverage (1x to 100x) based on:
+   - Volatility of the asset (higher volatility = lower leverage)
+   - Chart patterns (conservative patterns = can use higher leverage)
+   - Risk tolerance (suggest conservative leverage for safer trades)
+   - Typical leverage for this asset type (crypto futures often 10-25x, stocks lower)
+   - The margin mode selected ({margin_mode.replace('_', ' ').title()})
+
+4. TRADING STRATEGY: Identify the strategy from the chart:
+   - Breakout, Reversal, Trend Following, Range Trading, etc.
+
+5. PRICE LEVELS:
+   - FIRST: Read the ACTUAL CURRENT PRICE from the chart
+   - Entry price: Optimal entry based on support/resistance and patterns
+   - Stop Loss: Calculate based on your recommended leverage (tighter stops for higher leverage)
+   - Take Profit: At least 2:1 risk:reward ratio, adjusted for recommended leverage
+
+6. LEVERAGE-BASED STOP LOSS GUIDELINES:
+   - 1-5x leverage: 2-3% stop loss
+   - 10-20x leverage: 1-1.5% stop loss  
+   - 25-50x leverage: 0.5-1% stop loss
+   - 50x+ leverage: 0.3-0.5% stop loss
+
+7. CONFIDENCE LEVEL: 0-100% based on pattern clarity and market conditions
+
+8. DETAILED REASONING: Explain why you chose each parameter
 
 PRICE VALIDATION:
 - Entry price MUST be within 10% of the current price visible on the chart
@@ -169,13 +162,16 @@ PRICE VALIDATION:
 
 RESPOND ONLY IN VALID JSON FORMAT:
 {{
-    "symbol_detected": "string (the asset symbol you identified from the chart, e.g., ETH, BTC, AAPL, EUR/USD)",
+    "symbol_detected": "string (the asset symbol you identified, e.g., ETH/USDT, BTC/USDT)",
+    "position_type": "string (either 'long' or 'short' - your recommendation based on chart analysis)",
+    "recommended_leverage": number (your recommended leverage from 1 to 100),
+    "trading_strategy": "string (e.g., Breakout, Reversal, Trend Following, Range Trading)",
     "entry_price": number (entry price - MUST be realistic based on chart),
-    "stop_loss": number (stop loss price),
-    "take_profit": number (take profit price),
+    "stop_loss": number (stop loss price - adjusted for recommended leverage),
+    "take_profit": number (take profit price - at least 2:1 risk:reward),
     "confidence": number (0-100, confidence level),
-    "pattern_detected": "string (detected pattern)",
-    "analysis": "string (detailed explanation including the current price you read)",
+    "pattern_detected": "string (detected chart pattern)",
+    "analysis": "string (detailed explanation of all your decisions: why this position type, why this leverage, why these levels)",
     "risk_reward_ratio": number (risk:reward ratio),
     "current_price_read": number (the actual current price you read from the chart)
 }}
