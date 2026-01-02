@@ -114,9 +114,9 @@ class ImageAnalyzer:
         self,
         image: Image.Image,
         symbol: Optional[str],
-        position_type: str = "long",
+        position_type: Optional[str] = None,
         margin_mode: str = "cross_margin",
-        leverage: int = 1
+        leverage: Optional[int] = None
     ) -> Dict:
         """Analiza usando Google Gemini Vision."""
         try:
@@ -273,10 +273,14 @@ IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and exp
                             analysis_data['pattern_detected'] = "Pattern not specified"
                         if 'analysis' not in analysis_data:
                             analysis_data['analysis'] = content
-                        # Añadir tipo de posición
-                        analysis_data['position_type'] = position_type
+                        # Añadir tipo de posición, margin mode y leverage
+                        if 'position_type' not in analysis_data or not analysis_data.get('position_type'):
+                            analysis_data['position_type'] = position_type if position_type else 'long'
                         analysis_data['margin_mode'] = margin_mode
-                        analysis_data['leverage'] = leverage
+                        if 'recommended_leverage' in analysis_data:
+                            analysis_data['leverage'] = analysis_data['recommended_leverage']
+                        elif 'leverage' not in analysis_data:
+                            analysis_data['leverage'] = leverage if leverage else 10  # Default 10x si no se especifica
                         if 'risk_reward_ratio' not in analysis_data:
                             # Calcular si tenemos entry, stop y take
                             if all(k in analysis_data for k in ['entry_price', 'stop_loss', 'take_profit']):
@@ -301,16 +305,19 @@ IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and exp
                     return self._create_fallback_response(content)
             else:
                 self.logger.error("Respuesta vacía de Gemini API")
-                return self._analyze_with_basic_cv(image, symbol)
+                return self._analyze_with_basic_cv(image, symbol, position_type, margin_mode, leverage)
                 
         except Exception as e:
             self.logger.error(f"Error analizando con Gemini: {str(e)}")
-            return self._analyze_with_basic_cv(image, symbol)
+            return self._analyze_with_basic_cv(image, symbol, position_type, margin_mode, leverage)
     
     def _analyze_with_basic_cv(
         self,
         image: Image.Image,
-        symbol: Optional[str]
+        symbol: Optional[str],
+        position_type: Optional[str] = None,
+        margin_mode: str = "cross_margin",
+        leverage: Optional[int] = None
     ) -> Dict:
         """Análisis básico usando visión por computadora (OpenCV)."""
         if not CV2_AVAILABLE:
