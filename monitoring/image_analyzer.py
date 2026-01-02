@@ -10,10 +10,17 @@ import json
 import re
 from typing import Dict, Optional, List
 from PIL import Image
-import cv2
 import numpy as np
 from utils.logger import logger
 from utils.config_loader import config
+
+# Importaciones opcionales
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    cv2 = None
 
 try:
     import google.generativeai as genai
@@ -306,6 +313,21 @@ IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and exp
         symbol: Optional[str]
     ) -> Dict:
         """Análisis básico usando visión por computadora (OpenCV)."""
+        if not CV2_AVAILABLE:
+            # Si OpenCV no está disponible, retornar respuesta básica
+            self.logger.warning("OpenCV no disponible. Retornando análisis básico sin procesamiento de imagen.")
+            return {
+                'entry_price': 0,
+                'stop_loss': 0,
+                'take_profit': 0,
+                'confidence': 0.3,
+                'pattern_detected': 'Basic analysis - OpenCV not available',
+                'analysis': 'OpenCV is not installed. Please install opencv-python for basic image analysis, or configure GEMINI_API_KEY for advanced AI analysis.',
+                'risk_reward_ratio': 0,
+                'current_price_read': 0,
+                'symbol_detected': symbol if symbol else "N/A"
+            }
+        
         try:
             # Convertir a numpy array
             img_array = np.array(image)
