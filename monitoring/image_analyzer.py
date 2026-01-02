@@ -14,14 +14,7 @@ import numpy as np
 from utils.logger import logger
 from utils.config_loader import config
 
-# Importaciones opcionales
-try:
-    import cv2
-    CV2_AVAILABLE = True
-except ImportError:
-    CV2_AVAILABLE = False
-    cv2 = None
-
+# Importación de Gemini (requerida para análisis de imágenes)
 try:
     import google.generativeai as genai
     GEMINI_AVAILABLE = True
@@ -107,8 +100,11 @@ class ImageAnalyzer:
             self.logger.info(f"Usando Gemini para análisis de {symbol or 'gráfico'}")
             return self._analyze_with_gemini(image, symbol, position_type, margin_mode, leverage)
         else:
-            self.logger.warning("Gemini no disponible, usando análisis básico (menos preciso)")
-            return self._analyze_with_basic_cv(image, symbol, position_type, margin_mode, leverage)
+            self.logger.warning("Gemini no disponible. Por favor, configura GEMINI_API_KEY para usar el análisis de imágenes.")
+            return self._create_fallback_response(
+                "Gemini API no está configurada. Por favor, configura GEMINI_API_KEY en tus variables de entorno o secrets de Streamlit Cloud.",
+                symbol
+            )
     
     def _analyze_with_gemini(
         self,
@@ -299,101 +295,35 @@ IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and exp
                     except json.JSONDecodeError as e:
                         self.logger.warning(f"Error parseando JSON de Gemini: {str(e)}")
                         self.logger.debug(f"Contenido recibido: {content[:500]}")
-                        return self._create_fallback_response(content)
+                        return self._create_fallback_response(content, symbol)
                 else:
                     self.logger.warning("No se encontró JSON en la respuesta de Gemini")
-                    return self._create_fallback_response(content)
+                    return self._create_fallback_response(content, symbol)
             else:
                 self.logger.error("Respuesta vacía de Gemini API")
-                return self._analyze_with_basic_cv(image, symbol, position_type, margin_mode, leverage)
+                return self._create_fallback_response("Gemini API devolvió una respuesta vacía. Por favor, intenta con otra imagen.", symbol)
                 
         except Exception as e:
             self.logger.error(f"Error analizando con Gemini: {str(e)}")
-            return self._analyze_with_basic_cv(image, symbol, position_type, margin_mode, leverage)
+            return self._create_fallback_response(f"Error al analizar con Gemini: {str(e)}. Por favor, verifica tu configuración de API key.", symbol)
     
-    def _analyze_with_basic_cv(
-        self,
-        image: Image.Image,
-        symbol: Optional[str],
-        position_type: Optional[str] = None,
-        margin_mode: str = "cross_margin",
-        leverage: Optional[int] = None
-    ) -> Dict:
-        """Análisis básico usando visión por computadora (OpenCV)."""
-        if not CV2_AVAILABLE:
-            # Si OpenCV no está disponible, retornar respuesta básica
-            self.logger.warning("OpenCV no disponible. Retornando análisis básico sin procesamiento de imagen.")
-            return {
-                'entry_price': 0,
-                'stop_loss': 0,
-                'take_profit': 0,
-                'confidence': 0.3,
-                'pattern_detected': 'Basic analysis - OpenCV not available',
-                'analysis': 'OpenCV is not installed. Please install opencv-python for basic image analysis, or configure GEMINI_API_KEY for advanced AI analysis.',
-                'risk_reward_ratio': 0,
-                'current_price_read': 0,
-                'symbol_detected': symbol if symbol else "N/A"
-            }
-        
-        try:
-            # Convertir a numpy array
-            img_array = np.array(image)
-            
-            # Convertir a escala de grises si es necesario
-            if len(img_array.shape) == 3:
-                gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-            else:
-                gray = img_array
-            
-            # Detectar líneas horizontales (soporte/resistencia)
-            edges = cv2.Canny(gray, 50, 150)
-            lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=100, minLineLength=50, maxLineGap=10)
-            
-            # Extraer niveles horizontales
-            horizontal_levels = []
-            if lines is not None:
-                for line in lines:
-                    x1, y1, x2, y2 = line[0]
-                    # Si la línea es más horizontal que vertical
-                    if abs(y2 - y1) < abs(x2 - x1) * 0.1:
-                        avg_y = (y1 + y2) / 2
-                        horizontal_levels.append(avg_y)
-            
-            # Calcular estadísticas básicas
-            height, width = gray.shape
-            mean_intensity = np.mean(gray)
-            
-            # Estimación básica de niveles (simplificado)
-            # En un caso real, necesitarías OCR o más procesamiento de imagen
-            entry_price = mean_intensity * 100  # Placeholder
-            stop_loss = entry_price * 0.98
-            take_profit = entry_price * 1.04
-            
-            return {
-                "entry_price": float(entry_price),
-                "stop_loss": float(stop_loss),
-                "take_profit": float(take_profit),
-                "confidence": 0.5,  # Baja confianza sin IA avanzada
-                "pattern_detected": "Análisis básico - Configura Gemini API para mejor precisión",
-                "analysis": f"Análisis básico detectó {len(horizontal_levels)} niveles horizontales. "
-                          f"Se recomienda usar Gemini API para análisis más preciso.",
-                "risk_reward_ratio": 2.0
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Error en análisis básico: {str(e)}")
-            return self._create_fallback_response("Error en procesamiento de imagen")
     
-    def _create_fallback_response(self, message: str) -> Dict:
-        """Crea una respuesta de fallback."""
+    def _create_fallback_response(self, message: str, symbol: Optional[str] = None) -> Dict:
+        """Crea una respuesta de fallback cuando Gemini no está disponible."""
         return {
             "entry_price": 0.0,
             "stop_loss": 0.0,
             "take_profit": 0.0,
             "confidence": 0.0,
-            "pattern_detected": "No detectado",
+            "pattern_detected": "No detectado - Gemini no disponible",
             "analysis": message,
-            "risk_reward_ratio": 0.0
+            "risk_reward_ratio": 0.0,
+            "current_price_read": 0.0,
+            "symbol_detected": symbol if symbol else "N/A",
+            "position_type": "long",
+            "recommended_leverage": 1,
+            "trading_strategy": "N/A",
+            "margin_mode": "cross_margin"
         }
     
     def extract_price_levels_from_text(self, text: str) -> Dict:
