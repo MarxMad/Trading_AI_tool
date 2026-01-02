@@ -35,8 +35,23 @@ class ImageAnalyzer:
         if self.use_gemini:
             try:
                 genai.configure(api_key=self.gemini_api_key)
-                self.model = genai.GenerativeModel('gemini-1.5-pro-vision-latest')
-                self.logger.info("Gemini configurado correctamente")
+                # Usar el modelo gemini-2.5-flash-lite como solicitado
+                try:
+                    self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                    self.logger.info(f"Gemini configurado con modelo gemini-2.5-flash-lite")
+                except Exception as model_error:
+                    # Fallback a otros modelos si el solicitado no está disponible
+                    try:
+                        self.model = genai.GenerativeModel('gemini-1.5-pro')
+                        self.logger.warning(f"Modelo gemini-2.5-flash-lite no disponible, usando gemini-1.5-pro (fallback)")
+                    except Exception as e1:
+                        try:
+                            self.model = genai.GenerativeModel('gemini-1.5-flash')
+                            self.logger.warning(f"Usando gemini-1.5-flash (fallback)")
+                        except Exception as e2:
+                            self.model = genai.GenerativeModel('gemini-pro')
+                            self.logger.warning(f"Usando gemini-pro (último fallback)")
+                self.logger.info(f"Gemini API Key configurada: {self.gemini_api_key[:10]}...")
             except Exception as e:
                 self.logger.error(f"Error configurando Gemini: {str(e)}")
                 self.use_gemini = False
@@ -46,17 +61,24 @@ class ImageAnalyzer:
                     "google-generativeai no está instalado. "
                     "Instala con: pip install google-generativeai"
                 )
-            else:
+            elif not self.gemini_api_key:
                 self.logger.warning(
                     "GEMINI_API_KEY no configurada. "
                     "Usando análisis básico de patrones. "
-                    "Para mejor precisión, configura tu API key de Gemini."
+                    "Para mejor precisión, configura tu API key de Gemini en .env"
+                )
+            else:
+                self.logger.warning(
+                    f"Gemini no disponible. API Key presente: {bool(self.gemini_api_key)}"
                 )
     
     def analyze_chart_image(
         self,
         image: Image.Image,
-        symbol: Optional[str] = None
+        symbol: Optional[str] = None,
+        position_type: str = "long",
+        margin_mode: str = "cross_margin",
+        leverage: int = 1
     ) -> Dict:
         """
         Analiza una imagen de gráfico de trading y sugiere niveles.
@@ -75,43 +97,90 @@ class ImageAnalyzer:
                 - analysis: Análisis detallado
         """
         if self.use_gemini:
+            self.logger.info(f"Usando Gemini para análisis de {symbol or 'gráfico'}")
             return self._analyze_with_gemini(image, symbol)
         else:
+            self.logger.warning("Gemini no disponible, usando análisis básico (menos preciso)")
             return self._analyze_with_basic_cv(image, symbol)
     
     def _analyze_with_gemini(
         self,
         image: Image.Image,
-        symbol: Optional[str]
+        symbol: Optional[str],
+        position_type: str = "long",
+        margin_mode: str = "cross_margin",
+        leverage: int = 1
     ) -> Dict:
         """Analiza usando Google Gemini Vision."""
         try:
-            # Preparar prompt
-            prompt = f"""
-Analiza esta imagen de un gráfico de trading{' para ' + symbol if symbol else ''} y proporciona un análisis técnico detallado.
+            # Preparar prompt mejorado y más específico
+            symbol_context = f" for {symbol}" if symbol else ""
+            position_context = f" This is a {position_type.upper()} position." if position_type else ""
+            margin_context = f" Margin Mode: {margin_mode.replace('_', ' ').title()}"
+            leverage_context = f" Leverage: {leverage}x"
+            
+            # Calcular ajustes según leverage
+            # Con mayor leverage, necesitamos stops más ajustados
+            if leverage >= 50:
+                stop_pct = 0.5  # 0.5% para leverage muy alto
+                min_rr = 3.0  # Risk:Reward mínimo 1:3
+            elif leverage >= 20:
+                stop_pct = 1.0  # 1% para leverage alto
+                min_rr = 2.5
+            elif leverage >= 10:
+                stop_pct = 1.5  # 1.5% para leverage medio-alto
+                min_rr = 2.0
+            elif leverage >= 5:
+                stop_pct = 2.0  # 2% para leverage medio
+                min_rr = 2.0
+            else:
+                stop_pct = 2.5  # 2.5% para leverage bajo
+                min_rr = 2.0
+            
+            prompt = f"""You are a professional trading chart analyst specializing in futures trading. Analyze this trading chart image{symbol_context} and provide precise trading levels.{position_context}{margin_context}{leverage_context}
 
-INSTRUCCIONES:
-1. Identifica el patrón técnico visible (soporte, resistencia, tendencia alcista/bajista, etc.)
-2. Lee los valores numéricos de precio visibles en el gráfico
-3. Sugiere un precio de ENTRADA óptimo basado en los niveles visibles
-4. Sugiere un precio de STOP LOSS (máximo riesgo 2-3% desde entrada)
-5. Sugiere un precio de TAKE PROFIT (ratio riesgo:beneficio mínimo 1:2)
-6. Calcula el nivel de confianza de la operación (0-100%)
-7. Proporciona una razón detallada del análisis
+FIRST STEP - IDENTIFY THE ASSET:
+1. Look at the chart and identify what asset/symbol is being traded (e.g., ETH, BTC, AAPL, EUR/USD)
+2. Read the symbol name from the chart title, labels, or any visible text
+3. If you can see the symbol, include it in your response
 
-IMPORTANTE: Responde ÚNICAMENTE en formato JSON válido con las siguientes claves exactas:
+CRITICAL INSTRUCTIONS - LEVERAGE ADJUSTED:
+1. FIRST: Read the ACTUAL CURRENT PRICE displayed on the chart. Look for price labels, current price indicators, or price axis values.
+2. Identify visible technical patterns (support, resistance, trend lines, chart patterns)
+3. IMPORTANT - LEVERAGE CONSIDERATION: This trade uses {leverage}x leverage. With higher leverage, you MUST use tighter stop losses to prevent liquidation.
+4. Based on the CURRENT PRICE, POSITION TYPE ({position_type.upper()}), and LEVERAGE ({leverage}x), suggest:
+   - Entry price: Should be close to current price or a nearby support/resistance level
+   - Stop Loss (CRITICAL with {leverage}x leverage): 
+     * For LONG: Approximately {stop_pct}% BELOW entry price (tighter stop due to {leverage}x leverage)
+     * For SHORT: Approximately {stop_pct}% ABOVE entry price (tighter stop due to {leverage}x leverage)
+     * With {leverage}x leverage, a {stop_pct}% move against you can cause significant losses or liquidation
+   - Take Profit: 
+     * For LONG: At least {min_rr}x the risk distance ABOVE entry (minimum {min_rr}:1 risk:reward ratio)
+     * For SHORT: At least {min_rr}x the risk distance BELOW entry (minimum {min_rr}:1 risk:reward ratio)
+     * With {leverage}x leverage, aim for higher reward to justify the risk
+5. Calculate confidence level (0-100%) - consider that higher leverage increases risk
+6. Provide detailed reasoning including leverage risk considerations
+
+PRICE VALIDATION:
+- Entry price MUST be within 10% of the current price visible on the chart
+- If current price is around 3000, entry should be between 2700-3300, NOT 22000
+- Read the price axis carefully - check both left and right sides of the chart
+- Look for price labels, current price displays, or recent candle closes
+
+RESPOND ONLY IN VALID JSON FORMAT:
 {{
-    "entry_price": número (precio de entrada),
-    "stop_loss": número (precio de stop loss),
-    "take_profit": número (precio de take profit),
-    "confidence": número (0-100, nivel de confianza),
-    "pattern_detected": "string (patrón detectado)",
-    "analysis": "string explicativo detallado",
-    "risk_reward_ratio": número (ratio riesgo:beneficio)
+    "symbol_detected": "string (the asset symbol you identified from the chart, e.g., ETH, BTC, AAPL, EUR/USD)",
+    "entry_price": number (entry price - MUST be realistic based on chart),
+    "stop_loss": number (stop loss price),
+    "take_profit": number (take profit price),
+    "confidence": number (0-100, confidence level),
+    "pattern_detected": "string (detected pattern)",
+    "analysis": "string (detailed explanation including the current price you read)",
+    "risk_reward_ratio": number (risk:reward ratio),
+    "current_price_read": number (the actual current price you read from the chart)
 }}
 
-Sé muy preciso con los niveles de precio basándote en los valores numéricos visibles en el gráfico.
-Si no puedes leer los precios exactos, indica "No se pueden leer los precios" en el análisis.
+IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and explain in the analysis field why you couldn't read them.
 """
             
             # Llamar a Gemini API
@@ -147,7 +216,7 @@ Si no puedes leer los precios exactos, indica "No se pueden leer los precios" en
                             analysis_data['confidence'] = 0.5
                         
                         # Asegurar que todos los campos numéricos sean float
-                        for key in ['entry_price', 'stop_loss', 'take_profit', 'risk_reward_ratio']:
+                        for key in ['entry_price', 'stop_loss', 'take_profit', 'risk_reward_ratio', 'current_price_read']:
                             if key in analysis_data:
                                 if isinstance(analysis_data[key], str):
                                     # Extraer número de string
@@ -159,11 +228,52 @@ Si no puedes leer los precios exactos, indica "No se pueden leer los precios" en
                                 else:
                                     analysis_data[key] = float(analysis_data[key])
                         
+                        # VALIDACIÓN CRÍTICA: Verificar que los precios sean razonables
+                        current_price = analysis_data.get('current_price_read', 0)
+                        entry_price = analysis_data.get('entry_price', 0)
+                        
+                        # Si tenemos el precio actual leído, validar que entry esté cerca
+                        if current_price > 0 and entry_price > 0:
+                            # Entry debe estar dentro del 15% del precio actual
+                            price_diff_percent = abs(entry_price - current_price) / current_price * 100
+                            if price_diff_percent > 15:
+                                self.logger.warning(
+                                    f"Precio de entrada ({entry_price}) está muy lejos del precio actual ({current_price}). "
+                                    f"Diferencia: {price_diff_percent:.1f}%. Ajustando..."
+                                )
+                                # Ajustar entry al precio actual si está muy lejos
+                                if entry_price > current_price * 1.5 or entry_price < current_price * 0.5:
+                                    analysis_data['entry_price'] = current_price
+                                    analysis_data['stop_loss'] = current_price * 0.97  # 3% stop
+                                    analysis_data['take_profit'] = current_price * 1.06  # 2:1 RR
+                                    analysis_data['confidence'] = 0.3  # Bajar confianza
+                                    analysis_data['analysis'] += f" [ADVERTENCIA: Precios ajustados. Precio actual leído: {current_price}]"
+                        
+                        # Validar que stop loss y take profit sean razonables respecto a entry
+                        if entry_price > 0:
+                            if analysis_data.get('stop_loss', 0) > 0:
+                                stop_pct = abs(entry_price - analysis_data['stop_loss']) / entry_price * 100
+                                if stop_pct > 10:  # Stop loss no debe ser más del 10%
+                                    analysis_data['stop_loss'] = entry_price * 0.97
+                                    self.logger.warning(f"Stop loss ajustado a 3% del entry")
+                            
+                            if analysis_data.get('take_profit', 0) > 0:
+                                take_pct = abs(analysis_data['take_profit'] - entry_price) / entry_price * 100
+                                if take_pct < 1:  # Take profit debe ser al menos 1%
+                                    analysis_data['take_profit'] = entry_price * 1.06
+                                    self.logger.warning(f"Take profit ajustado a 6% del entry")
+                        
                         # Asegurar campos de texto
+                        if 'symbol_detected' not in analysis_data:
+                            analysis_data['symbol_detected'] = symbol if symbol else "N/A"
                         if 'pattern_detected' not in analysis_data:
-                            analysis_data['pattern_detected'] = "Patrón no especificado"
+                            analysis_data['pattern_detected'] = "Pattern not specified"
                         if 'analysis' not in analysis_data:
                             analysis_data['analysis'] = content
+                        # Añadir tipo de posición
+                        analysis_data['position_type'] = position_type
+                        analysis_data['margin_mode'] = margin_mode
+                        analysis_data['leverage'] = leverage
                         if 'risk_reward_ratio' not in analysis_data:
                             # Calcular si tenemos entry, stop y take
                             if all(k in analysis_data for k in ['entry_price', 'stop_loss', 'take_profit']):
