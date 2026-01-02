@@ -105,10 +105,10 @@ class ImageAnalyzer:
         """
         if self.use_gemini:
             self.logger.info(f"Usando Gemini para análisis de {symbol or 'gráfico'}")
-            return self._analyze_with_gemini(image, symbol)
+            return self._analyze_with_gemini(image, symbol, position_type, margin_mode, leverage)
         else:
             self.logger.warning("Gemini no disponible, usando análisis básico (menos preciso)")
-            return self._analyze_with_basic_cv(image, symbol)
+            return self._analyze_with_basic_cv(image, symbol, position_type, margin_mode, leverage)
     
     def _analyze_with_gemini(
         self,
