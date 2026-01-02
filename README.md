@@ -6,9 +6,9 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-**An advanced trading platform powered by AI for intelligent market analysis and automated trade execution**
+**An advanced trading platform powered by AI for intelligent market analysis and chart pattern recognition**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture)
+🌐 **[Live Demo](https://trading-aitool.streamlit.app/)** • [Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture)
 
 </div>
 
@@ -16,16 +16,18 @@
 
 ## 📖 Overview
 
-**Trading AI Pro** is a comprehensive trading system that combines artificial intelligence with professional trading tools. Upload chart screenshots, get AI-powered analysis, and execute trades directly on CoinW exchange - all from a beautiful, modern web interface.
+**Trading AI Pro** is a comprehensive trading analysis system that combines artificial intelligence with professional trading tools. Upload chart screenshots and get AI-powered analysis with optimal entry, stop-loss, and take-profit levels. Share your analysis with friends and colleagues via WhatsApp, Telegram, or Twitter - all from a beautiful, modern web interface.
+
+**🌐 Try it now:** [https://trading-aitool.streamlit.app/](https://trading-aitool.streamlit.app/)
 
 ### ✨ Key Highlights
 
 - 🤖 **AI-Powered Chart Analysis** - Upload trading charts and get instant entry, stop-loss, and take-profit levels
-- 🔄 **Direct Exchange Integration** - Execute trades directly on CoinW with your own API credentials
-- 📊 **Real-Time Account Monitoring** - View balance, open positions, and P&L in real-time
-- 📝 **Trading Journal** - Track all your trades with detailed statistics and performance metrics
-- 🎨 **Modern UI** - Beautiful, intuitive interface built with Streamlit
-- 🔒 **Secure** - Your API credentials are stored only in your browser session
+- 📤 **Easy Sharing** - Share your analysis via WhatsApp, Telegram, or Twitter with one click
+- 💰 **Risk Management Focus** - Generate excellent returns while maintaining proper risk management
+- 🎯 **Automatic Detection** - AI automatically detects position type, leverage, symbol, and strategy
+- 🎨 **Modern UI** - Beautiful, intuitive interface with premium gold accents and dark theme
+- 🔒 **Secure** - No API keys required - just upload and analyze
 
 ---
 
@@ -55,46 +57,23 @@ Upload a screenshot of any trading chart and let our AI analyze it:
 
 **Powered by:** Google Gemini 2.5 Flash Lite
 
-### 💱 Direct Exchange Trading
+### 📤 Share Your Analysis
 
-Connect your CoinW account and execute trades directly:
+Easily share your trading analysis with friends and colleagues:
 
-- **Secure API Integration:**
-  - Credentials stored only in browser session
-  - Never shared with servers or other users
-  - Automatic cleanup when browser closes
+- **Multiple Platforms:**
+  - Share via WhatsApp with formatted message
+  - Share via Telegram with one click
+  - Share via Twitter/X to your followers
+  
+- **Formatted Messages:**
+  - Professional message format with all key details
+  - Includes asset, position type, leverage, and levels
+  - Copy to clipboard option for manual sharing
 
-- **Real-Time Account Info:**
-  - Available balance
-  - Total balance
-  - Open positions with P&L
-  - Leverage and margin mode
-
-- **One-Click Trading:**
-  - Execute trades with AI-recommended levels
-  - Automatic position sizing based on risk
-  - Stop loss and take profit orders placed automatically
-
-### 📊 Trading Journal
-
-Comprehensive trade tracking and analytics:
-
-- **Trade Management:**
-  - Record all trades with detailed information
-  - Filter by symbol, status, or date
-  - Export data for external analysis
-
-- **Performance Metrics:**
-  - Total trades count
-  - Win rate percentage
-  - Total P&L
-  - Average P&L per trade
-  - Best and worst trades
-
-- **Statistics Dashboard:**
-  - Real-time updates
-  - Visual performance indicators
-  - Historical analysis
+- **No Account Required:**
+  - Share without any API keys or account setup
+  - Works instantly after analysis
 
 ### 🎨 Modern User Interface
 
@@ -113,7 +92,6 @@ Beautiful, professional design:
 
 - Python 3.10 or higher
 - pip (Python package manager)
-- CoinW account (for trading features)
 - Google Gemini API key (for AI analysis)
 
 ### Installation
@@ -141,10 +119,6 @@ Beautiful, professional design:
    ```env
    # Google Gemini API (Required for AI analysis)
    GEMINI_API_KEY=your_gemini_api_key_here
-   
-   # CoinW API (Optional - for trading features)
-   COINW_API_KEY=your_coinw_api_key_here
-   COINW_API_SECRET=your_coinw_api_secret_here
    ```
 
 5. **Run the application:**
@@ -168,17 +142,17 @@ Beautiful, professional design:
    - Add it to your `.env` file or Streamlit Cloud secrets
    - See [CONFIGURACION_GEMINI.md](CONFIGURACION_GEMINI.md) for details
 
-2. **Configure CoinW API (Optional):**
-   - Create API key in your CoinW account
-   - Enter credentials in the sidebar when using the app
-   - See [CONFIGURACION_COINW.md](CONFIGURACION_COINW.md) for detailed instructions
-
-3. **Start Analyzing Charts:**
+2. **Start Analyzing Charts:**
    - Upload a chart screenshot
    - Select margin mode (Cross or Isolated)
    - Click "Analyze Chart with AI"
    - Review the AI recommendations
-   - Execute trade directly on CoinW (if configured)
+   - Share your analysis via WhatsApp, Telegram, or Twitter
+
+### 🌐 Online Access
+
+**Try the application online without installation:**
+- **Live Demo:** [https://trading-aitool.streamlit.app/](https://trading-aitool.streamlit.app/)
 
 ---
 
@@ -199,7 +173,7 @@ Trading_AI_tool/
 │   ├── image_analyzer.py      # AI chart analysis (Gemini)
 │   └── trading_journal.py     # Trade tracking system
 ├── exchanges/
-│   └── coinw_client.py        # CoinW API integration
+│   └── coinw_client.py        # Exchange integration (legacy)
 ├── risk/
 │   └── risk_manager.py        # Risk management & position sizing
 ├── payment/
@@ -237,12 +211,12 @@ graph LR
     
     B --> E
     C --> H
-    J --> K[CoinW Exchange]
+    J --> K[Share Analysis]
     D --> L[Statistics]
     
     style A fill:#4a9eff,stroke:#333,color:#fff
     style E fill:#10b981,stroke:#333,color:#fff
-    style K fill:#f59e0b,stroke:#333,color:#fff
+    style K fill:#d4af37,stroke:#333,color:#fff
 ```
 
 ### Core Components
@@ -253,11 +227,11 @@ graph LR
 - Validates and adjusts recommended levels
 - Returns structured analysis data
 
-#### 2. **CoinW Client** (`exchanges/coinw_client.py`)
-- Secure API integration with CoinW exchange
-- Account balance retrieval
-- Position management
-- Order execution (market, limit, stop-loss, take-profit)
+#### 2. **Share Functionality** (Built-in)
+- Share analysis via WhatsApp, Telegram, or Twitter
+- Formatted message generation
+- Copy to clipboard option
+- No external dependencies required
 
 #### 3. **Trading Journal** (`monitoring/trading_journal.py`)
 - Trade recording and storage
@@ -279,17 +253,15 @@ flowchart TD
     B --> C[Google Gemini AI Analysis]
     C --> D[Extract Trading Parameters]
     D --> E{User Reviews Results}
-    E -->|Approves| F[CoinW Client]
-    E -->|Rejects| A
-    F --> G[Calculate Position Size]
-    G --> H[Execute Trade on Exchange]
-    H --> I[Trading Journal]
-    I --> J[Update Statistics]
-    J --> K[Dashboard Refresh]
+    E -->|Shares| F[Share Functionality]
+    E -->|New Analysis| A
+    F --> G[Generate Share Message]
+    G --> H[Share via Platform]
+    H --> I[Analysis Complete]
     
     style A fill:#4a9eff,stroke:#333,color:#fff
     style C fill:#10b981,stroke:#333,color:#fff
-    style H fill:#f59e0b,stroke:#333,color:#fff
+    style H fill:#d4af37,stroke:#333,color:#fff
     style I fill:#8b5cf6,stroke:#333,color:#fff
 ```
 
@@ -311,9 +283,9 @@ graph TB
         CJ[Trading Journal]
     end
     
-    subgraph "Exchange Layer"
-        CW[CoinW Client]
-        EX[CoinW Exchange]
+    subgraph "Share Layer"
+        SH[Share Handler]
+        PL[Platforms]
     end
     
     subgraph "Data Layer"
@@ -324,16 +296,13 @@ graph TB
     UI --> IA
     IA --> GEM
     UI --> RM
-    UI --> CJ
-    UI --> CW
-    CW --> EX
-    CJ --> DB
+    UI --> SH
+    SH --> PL
     RM --> LOG
-    CW --> LOG
     
     style UI fill:#4a9eff,stroke:#333,color:#fff
     style GEM fill:#10b981,stroke:#333,color:#fff
-    style EX fill:#f59e0b,stroke:#333,color:#fff
+    style PL fill:#d4af37,stroke:#333,color:#fff
     style DB fill:#8b5cf6,stroke:#333,color:#fff
 ```
 
@@ -345,9 +314,7 @@ sequenceDiagram
     participant UI as Streamlit UI
     participant IA as Image Analyzer
     participant Gemini as Gemini API
-    participant RM as Risk Manager
-    participant CoinW as CoinW Client
-    participant Journal as Trading Journal
+    participant SH as Share Handler
     
     User->>UI: Upload Chart Image
     UI->>IA: Analyze Image
@@ -358,17 +325,13 @@ sequenceDiagram
     IA-->>UI: Return Analysis
     UI->>User: Display Results
     
-    User->>UI: Click "Trade" Button
-    UI->>RM: Calculate Position Size
-    RM-->>UI: Position Size
-    UI->>CoinW: Execute Trade
-    CoinW->>CoinW: Place Order
-    CoinW->>CoinW: Set Stop Loss
-    CoinW->>CoinW: Set Take Profit
-    CoinW-->>UI: Order Confirmation
-    UI->>Journal: Record Trade
-    Journal-->>UI: Trade Saved
-    UI->>User: Show Success Message
+    User->>UI: Click "Share" Button
+    UI->>SH: Generate Share Message
+    SH-->>UI: Formatted Message
+    UI->>User: Show Share Options
+    User->>UI: Select Platform
+    UI->>SH: Share via Platform
+    SH-->>User: Analysis Shared
 ```
 
 ---
@@ -380,8 +343,6 @@ sequenceDiagram
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GEMINI_API_KEY` | Yes | Google Gemini API key for AI analysis |
-| `COINW_API_KEY` | No | CoinW API key for trading |
-| `COINW_API_SECRET` | No | CoinW API secret for trading |
 
 ### Configuration Files
 
@@ -400,6 +361,8 @@ For production deployment on Streamlit Cloud:
    ```
 4. Deploy!
 
+**🌐 Live Application:** [https://trading-aitool.streamlit.app/](https://trading-aitool.streamlit.app/)
+
 See [Streamlit Cloud Documentation](https://docs.streamlit.io/deploy/streamlit-community-cloud) for details.
 
 ---
@@ -409,7 +372,6 @@ See [Streamlit Cloud Documentation](https://docs.streamlit.io/deploy/streamlit-c
 ### Setup Guides
 
 - **[Gemini Configuration](CONFIGURACION_GEMINI.md)** - How to set up Google Gemini API
-- **[CoinW Configuration](CONFIGURACION_COINW.md)** - Complete guide for CoinW API setup
 - **[Stripe Configuration](CONFIGURACION_STRIPE.md)** - Subscription payment setup
 
 ### User Guides
@@ -421,7 +383,6 @@ See [Streamlit Cloud Documentation](https://docs.streamlit.io/deploy/streamlit-c
 ### API Documentation
 
 - **Image Analyzer API** - See `monitoring/image_analyzer.py` docstrings
-- **CoinW Client API** - See `exchanges/coinw_client.py` docstrings
 - **Trading Journal API** - See `monitoring/trading_journal.py` docstrings
 
 ---
@@ -432,20 +393,18 @@ See [Streamlit Cloud Documentation](https://docs.streamlit.io/deploy/streamlit-c
 
 The codebase is modular and easy to extend:
 
-#### Adding a New Exchange
+#### Adding New Share Platforms
 
-1. Create a new client in `exchanges/`:
+1. Extend the share functionality in `app.py`:
    ```python
-   class NewExchangeClient:
-       def get_account_balance(self):
-           # Implementation
-       def place_order(self, ...):
-           # Implementation
+   def generate_share_message(analysis: dict) -> str:
+       # Customize message format
    ```
 
-2. Update `app.py` to support the new exchange:
+2. Add new share button:
    ```python
-   from exchanges.new_exchange_client import NewExchangeClient
+   # Add new platform share button
+   platform_url = f"https://platform.com/share?text={message}"
    ```
 
 #### Adding New AI Models
@@ -487,22 +446,16 @@ Follow PEP 8 guidelines. The project uses:
 
 - **Never commit API keys to version control**
 - Credentials are stored in `.env` (local) or Streamlit secrets (cloud)
-- CoinW credentials are stored only in browser session (temporary)
 - All API communications use HTTPS
 
 ### Best Practices
 
-1. **CoinW API Security:**
-   - Enable 2FA on your CoinW account
-   - Use IP whitelisting
-   - Never enable "Withdraw" permission
-   - Only enable permissions you need (Read, Trade)
-
-2. **Application Security:**
+1. **Application Security:**
    - Keep dependencies updated
    - Review code before deploying
    - Use environment variables for secrets
    - Regular security audits
+   - Only share analysis with trusted parties
 
 ---
 
@@ -539,13 +492,12 @@ The system tracks various performance metrics:
 - Always verify AI recommendations before trading
 - Confidence levels are estimates, not guarantees
 
-### Exchange Integration
+### Sharing Analysis
 
-- This tool connects directly to CoinW exchange
-- You are responsible for all trades executed
-- Review all orders before execution
-- Monitor your positions regularly
-- Understand exchange fees and margin requirements
+- Analysis results are for informational purposes only
+- Always verify AI recommendations before making trading decisions
+- Share responsibly and only with trusted parties
+- Remember that past analysis does not guarantee future results
 
 ---
 
@@ -580,7 +532,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - **Google Gemini** - For powerful AI vision capabilities
 - **Streamlit** - For the amazing web framework
-- **CoinW** - For exchange API access
 - **Open Source Community** - For various libraries and tools
 
 ---
@@ -609,7 +560,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ### Version History
 
-- **v1.0.0** (Current) - Initial release with AI analysis and CoinW integration
+- **v2.0.0** (Current) - AI analysis with sharing functionality, premium UI with gold accents
+- **v1.0.0** - Initial release with AI analysis
 - Future versions will include advanced features and optimizations
 
 ---
