@@ -287,3 +287,4 @@ if st.button("🚀 Trade"):
 - Limpiar flags apropiadamente
 - No limpiar datos hasta que sea necesario
 
+

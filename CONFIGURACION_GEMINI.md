@@ -78,3 +78,4 @@ pip install google-generativeai
 - [Documentación de Gemini](https://ai.google.dev/docs)
 - [Gemini API Python SDK](https://github.com/google/generative-ai-python)
 
+

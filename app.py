@@ -966,12 +966,15 @@ def generate_share_message(analysis: dict) -> str:
     position_type = analysis.get('position_type', 'N/A')
     leverage = analysis.get('recommended_leverage', 'N/A')
     strategy = analysis.get('trading_strategy', 'N/A')
+    trading_style = analysis.get('trading_style', 'N/A')
+    trading_style_display = trading_style.replace('_', ' ').title() if trading_style != 'N/A' else 'N/A'
     
     message = f"""📊 Trading Analysis - {symbol}
 
 💰 Current Price: ${current_price:.4f}
 📈 Position: {position_type.upper()}
 ⚡ Leverage: {leverage}x
+🎯 Trading Style: {trading_style_display}
 
 🎯 Entry: ${entry:.4f}
 🛑 Stop Loss: ${stop_loss:.4f}
@@ -1177,14 +1180,26 @@ if mode == "Image Analysis":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Solo margin mode - todo lo demás lo detecta la AI
-                margin_mode = st.selectbox(
-                    "Margin Mode",
-                    ["Cross Margin", "Isolated Margin"],
-                    label_visibility="visible",
-                    help="Cross Margin: Uses entire account balance. Isolated Margin: Uses only allocated margin for this position",
-                    index=0
-                )
+                # Margin mode y tipo de trading
+                col_margin, col_trading = st.columns(2)
+                
+                with col_margin:
+                    margin_mode = st.selectbox(
+                        "Margin Mode",
+                        ["Cross Margin", "Isolated Margin"],
+                        label_visibility="visible",
+                        help="Cross Margin: Uses entire account balance. Isolated Margin: Uses only allocated margin for this position",
+                        index=0
+                    )
+                
+                with col_trading:
+                    trading_style = st.selectbox(
+                        "Trading Style",
+                        ["Scalpers", "Swing Trading", "Long Term"],
+                        label_visibility="visible",
+                        help="Scalpers: Quick trades (minutes-hours). Swing Trading: Medium-term (days-weeks). Long Term: Position holding (weeks-months)",
+                        index=1
+                    )
                 
                 st.markdown("""
                 <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(74, 158, 255, 0.1); border-radius: 8px; border-left: 3px solid #4a9eff;">
@@ -1194,10 +1209,11 @@ if mode == "Image Analysis":
                         • Optimal Leverage<br>
                         • Asset Symbol<br>
                         • Trading Strategy<br>
-                        • Entry, Stop Loss & Take Profit
+                        • Entry, Stop Loss & Take Profit<br>
+                        <strong style="color: #d4af37; margin-top: 0.5rem; display: block;">Optimized for: {trading_style}</strong>
                     </p>
                 </div>
-                """, unsafe_allow_html=True)
+                """.format(trading_style=trading_style), unsafe_allow_html=True)
             
             # Check if Gemini is being used (safe access for cached objects)
             try:
@@ -1230,14 +1246,15 @@ if mode == "Image Analysis":
             analyze_button = st.button("🚀 Analyze Chart with AI", type="primary", use_container_width=True)
             
             if analyze_button:
-                with st.spinner("AI is analyzing the chart and detecting all trade parameters..."):
-                    # Solo pasar margin mode - la AI detectará todo lo demás
+                with st.spinner(f"AI is analyzing the chart optimized for {trading_style}..."):
+                    # Pasar margin mode y trading style - la AI detectará todo lo demás
                     analysis = components['image_analyzer'].analyze_chart_image(
                         image, 
                         None,  # La AI detectará el símbolo
                         None,  # La AI determinará el tipo de posición
                         margin_mode.lower().replace(' ', '_'),
-                        None  # La AI recomendará el leverage
+                        None,  # La AI recomendará el leverage
+                        trading_style.lower().replace(' ', '_')  # Tipo de trading para optimizar análisis
                     )
                     
                     # Incrementar contador
@@ -1252,6 +1269,8 @@ if mode == "Image Analysis":
                     analysis_margin = analysis.get('margin_mode', margin_mode.lower().replace(' ', '_'))
                     analysis_leverage = analysis.get('recommended_leverage', analysis.get('leverage', 10))
                     detected_strategy = analysis.get('trading_strategy', 'Not specified')
+                    analysis_trading_style = analysis.get('trading_style', trading_style.lower().replace(' ', '_'))
+                    trading_style_display = analysis_trading_style.replace('_', ' ').title()
                     position_color = "#10b981" if analysis_position == "LONG" else "#f44336"
                     position_icon = "📈" if analysis_position == "LONG" else "📉"
                     
@@ -1365,20 +1384,35 @@ if mode == "Image Analysis":
                         </div>
                         """, unsafe_allow_html=True)
                     
-                    # Pattern y análisis detallado - Mejorados
+                    # Trading Style y Pattern - Mejorados
                     st.markdown("""
                     <div style="margin: 3rem 0 2rem 0;">
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    st.markdown(f"""
-                    <div style="padding: 2rem; background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%); border-radius: 16px; border-left: 4px solid #4a9eff; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(74, 158, 255, 0.2);">
-                        <h3 style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🔍</span> Pattern Detected
-                        </h3>
-                        <p style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0; font-family: 'SF Mono', monospace;"><span class="value">{analysis['pattern_detected']}</span></p>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    col_style, col_pattern = st.columns(2)
+                    
+                    with col_style:
+                        style_icon = "⚡" if "scalpers" in analysis_trading_style.lower() else "📊" if "swing" in analysis_trading_style.lower() else "📈"
+                        style_color = "#f59e0b" if "scalpers" in analysis_trading_style.lower() else "#4a9eff" if "swing" in analysis_trading_style.lower() else "#10b981"
+                        st.markdown(f"""
+                        <div style="padding: 2rem; background: linear-gradient(135deg, {style_color}15 0%, {style_color}05 100%); border-radius: 16px; border: 2px solid {style_color}; margin-bottom: 1.5rem; box-shadow: 0 4px 15px {style_color}20; text-align: center;">
+                            <h3 style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <span>{style_icon}</span> Trading Style
+                            </h3>
+                            <p style="color: {style_color}; font-size: 1.3rem; font-weight: 700; margin: 0; font-family: 'SF Mono', monospace; text-shadow: 0 0 10px {style_color}50;">{trading_style_display}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_pattern:
+                        st.markdown(f"""
+                        <div style="padding: 2rem; background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%); border-radius: 16px; border-left: 4px solid #4a9eff; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(74, 158, 255, 0.2);">
+                            <h3 style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                                <span>🔍</span> Pattern Detected
+                            </h3>
+                            <p style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0; font-family: 'SF Mono', monospace;"><span class="value">{analysis['pattern_detected']}</span></p>
+                        </div>
+                        """, unsafe_allow_html=True)
                     
                     st.markdown(f"""
                     <div style="padding: 2rem; background: #1a1a1a; border-radius: 16px; border: 1px solid #333; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
@@ -1706,7 +1740,7 @@ st.markdown("""
             </a>
         </div>
         <p style="color: #555; font-size: 0.75rem; margin-top: 1.5rem;">
-            © 2024 Trading AI Pro. All rights reserved.
+            © 2026 Trading AI Pro. All rights reserved.
         </p>
     </div>
 </div>

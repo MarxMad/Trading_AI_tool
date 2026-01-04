@@ -167,3 +167,4 @@ STRIPE_PRICE_IDS = {
     'enterprise': config.get_env('STRIPE_PRICE_ID_ENTERPRISE', 'price_enterprise_monthly')
 }
 
+

@@ -139,3 +139,4 @@ Si encuentras problemas con la integración:
 
 **Última actualización**: Enero 2025
 
+

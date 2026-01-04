@@ -58,3 +58,4 @@ deactivate
 - **run_app.sh**: Crea venv, instala dependencias y ejecuta (completo)
 - Siempre asegúrate de tener el entorno virtual activado antes de ejecutar comandos Python
 
+

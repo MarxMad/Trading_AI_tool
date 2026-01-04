@@ -221,3 +221,4 @@ class TechnicalIndicators:
             'resistance': resistance_levels
         }
 
+

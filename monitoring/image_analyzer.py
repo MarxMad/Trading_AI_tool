@@ -78,7 +78,8 @@ class ImageAnalyzer:
         symbol: Optional[str] = None,
         position_type: Optional[str] = None,
         margin_mode: str = "cross_margin",
-        leverage: Optional[int] = None
+        leverage: Optional[int] = None,
+        trading_style: str = "swing_trading"
     ) -> Dict:
         """
         Analiza una imagen de gráfico de trading y sugiere niveles.
@@ -86,6 +87,10 @@ class ImageAnalyzer:
         Args:
             image: Imagen PIL del gráfico
             symbol: Símbolo del activo (opcional)
+            position_type: Tipo de posición (opcional)
+            margin_mode: Modo de margen (cross_margin o isolated_margin)
+            leverage: Leverage sugerido (opcional)
+            trading_style: Estilo de trading (scalpers, swing_trading, long_term)
             
         Returns:
             Diccionario con:
@@ -97,8 +102,8 @@ class ImageAnalyzer:
                 - analysis: Análisis detallado
         """
         if self.use_gemini:
-            self.logger.info(f"Usando Gemini para análisis de {symbol or 'gráfico'}")
-            return self._analyze_with_gemini(image, symbol, position_type, margin_mode, leverage)
+            self.logger.info(f"Usando Gemini para análisis de {symbol or 'gráfico'} con estilo {trading_style}")
+            return self._analyze_with_gemini(image, symbol, position_type, margin_mode, leverage, trading_style)
         else:
             self.logger.warning("Gemini no disponible. Por favor, configura GEMINI_API_KEY para usar el análisis de imágenes.")
             return self._create_fallback_response(
@@ -112,14 +117,54 @@ class ImageAnalyzer:
         symbol: Optional[str],
         position_type: Optional[str] = None,
         margin_mode: str = "cross_margin",
-        leverage: Optional[int] = None
+        leverage: Optional[int] = None,
+        trading_style: str = "swing_trading"
     ) -> Dict:
         """Analiza usando Google Gemini Vision."""
         try:
-            # Preparar prompt mejorado - AI detecta TODO automáticamente
+            # Preparar contexto de configuración
             margin_context = f" Margin Mode: {margin_mode.replace('_', ' ').title()}"
+            trading_style_display = trading_style.replace('_', ' ').title()
             
-            prompt = f"""You are an expert AI trading analyst. Analyze this trading chart image and AUTOMATICALLY DETECT AND PROVIDE all trading parameters. The user has selected {margin_context}. You must determine everything else from the chart.
+            # Definir optimizaciones según el estilo de trading
+            style_guidelines = {
+                "scalpers": {
+                    "timeframe": "minutes to hours",
+                    "leverage_range": "10-50x (higher leverage for quick profits)",
+                    "stop_loss": "Very tight (0.2-0.5% from entry)",
+                    "take_profit": "Quick targets (0.5-1% from entry), multiple small targets",
+                    "entry": "Precise entry on quick breakouts, pullbacks, or support/resistance bounces",
+                    "focus": "Short-term price action, order flow, quick reversals, scalping patterns"
+                },
+                "swing_trading": {
+                    "timeframe": "days to weeks",
+                    "leverage_range": "5-20x (moderate leverage)",
+                    "stop_loss": "Moderate (1-2% from entry)",
+                    "take_profit": "Medium targets (2-5% from entry), 2:1 to 3:1 risk:reward",
+                    "entry": "Entry on trend confirmations, pattern breakouts, or swing points",
+                    "focus": "Trend following, chart patterns, support/resistance levels, technical indicators"
+                },
+                "long_term": {
+                    "timeframe": "weeks to months",
+                    "leverage_range": "1-10x (conservative leverage)",
+                    "stop_loss": "Wider stops (2-5% from entry)",
+                    "take_profit": "Large targets (5-15%+ from entry), 3:1 to 5:1 risk:reward",
+                    "entry": "Entry on major trend changes, significant support/resistance, accumulation zones",
+                    "focus": "Major trends, fundamental analysis support, long-term patterns, macro trends"
+                }
+            }
+            
+            style_guide = style_guidelines.get(trading_style, style_guidelines["swing_trading"])
+            
+            prompt = f"""You are an expert AI trading analyst. Analyze this trading chart image and AUTOMATICALLY DETECT AND PROVIDE all trading parameters optimized for {trading_style_display} trading style. The user has selected {margin_context}. You must determine everything else from the chart.
+
+TRADING STYLE OPTIMIZATION - {trading_style_display.upper()}:
+- Timeframe Focus: {style_guide['timeframe']}
+- Leverage Range: {style_guide['leverage_range']}
+- Stop Loss Style: {style_guide['stop_loss']}
+- Take Profit Style: {style_guide['take_profit']}
+- Entry Strategy: {style_guide['entry']}
+- Analysis Focus: {style_guide['focus']}
 
 AUTOMATIC DETECTION REQUIRED - YOU MUST DETERMINE:
 
@@ -130,28 +175,31 @@ AUTOMATIC DETECTION REQUIRED - YOU MUST DETERMINE:
    - Support/resistance levels
    - Chart patterns (breakouts, reversals, etc.)
    - Technical indicators visible on the chart
+   - Consider the {trading_style_display} timeframe when determining position direction
 
-3. OPTIMAL LEVERAGE: Recommend the best leverage (1x to 100x) based on:
-   - Volatility of the asset (higher volatility = lower leverage)
-   - Chart patterns (conservative patterns = can use higher leverage)
-   - Risk tolerance (suggest conservative leverage for safer trades)
-   - Typical leverage for this asset type (crypto futures often 10-25x, stocks lower)
-   - The margin mode selected ({margin_mode.replace('_', ' ').title()})
+3. OPTIMAL LEVERAGE: Recommend the best leverage based on the {trading_style_display} style:
+   - MUST follow the leverage range guidelines: {style_guide['leverage_range']}
+   - For Scalpers: Higher leverage (10-50x) for quick profits, but adjust for volatility
+   - For Swing Trading: Moderate leverage (5-20x) for balanced risk/reward
+   - For Long Term: Conservative leverage (1-10x) for position holding
+   - Also consider: volatility of the asset, chart patterns, and the margin mode selected ({margin_mode.replace('_', ' ').title()})
 
 4. TRADING STRATEGY: Identify the strategy from the chart:
    - Breakout, Reversal, Trend Following, Range Trading, etc.
 
-5. PRICE LEVELS:
+5. PRICE LEVELS (OPTIMIZED FOR {trading_style_display.upper()}):
    - FIRST: Read the ACTUAL CURRENT PRICE from the chart
-   - Entry price: Optimal entry based on support/resistance and patterns
-   - Stop Loss: Calculate based on your recommended leverage (tighter stops for higher leverage)
-   - Take Profit: At least 2:1 risk:reward ratio, adjusted for recommended leverage
+   - Entry price: {style_guide['entry']}
+   - Stop Loss: {style_guide['stop_loss']} - MUST follow the {trading_style_display} stop loss guidelines
+   - Take Profit: {style_guide['take_profit']} - MUST follow the {trading_style_display} take profit guidelines
+   - For Scalpers: Look for quick entry points, tight stops, multiple small profit targets
+   - For Swing Trading: Look for swing points, moderate stops, medium profit targets
+   - For Long Term: Look for major support/resistance, wider stops, large profit targets
 
-6. LEVERAGE-BASED STOP LOSS GUIDELINES:
-   - 1-5x leverage: 2-3% stop loss
-   - 10-20x leverage: 1-1.5% stop loss  
-   - 25-50x leverage: 0.5-1% stop loss
-   - 50x+ leverage: 0.3-0.5% stop loss
+6. TRADING STYLE-SPECIFIC GUIDELINES:
+   - Scalpers: Focus on {style_guide['focus']} - prioritize quick execution and tight risk management
+   - Swing Trading: Focus on {style_guide['focus']} - prioritize trend confirmation and pattern recognition
+   - Long Term: Focus on {style_guide['focus']} - prioritize major trends and fundamental alignment
 
 7. CONFIDENCE LEVEL: 0-100% based on pattern clarity and market conditions
 
@@ -273,6 +321,7 @@ IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and exp
                         if 'position_type' not in analysis_data or not analysis_data.get('position_type'):
                             analysis_data['position_type'] = position_type if position_type else 'long'
                         analysis_data['margin_mode'] = margin_mode
+                        analysis_data['trading_style'] = trading_style
                         if 'recommended_leverage' in analysis_data:
                             analysis_data['leverage'] = analysis_data['recommended_leverage']
                         elif 'leverage' not in analysis_data:
