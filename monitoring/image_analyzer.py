@@ -192,6 +192,12 @@ AUTOMATIC DETECTION REQUIRED - YOU MUST DETERMINE:
    - Entry price: {style_guide['entry']}
    - Stop Loss: {style_guide['stop_loss']} - MUST follow the {trading_style_display} stop loss guidelines
    - Take Profit: {style_guide['take_profit']} - MUST follow the {trading_style_display} take profit guidelines
+   
+   CRITICAL - PRICE DIRECTION BASED ON POSITION TYPE:
+   - For LONG positions: Entry < Take Profit (take profit ABOVE entry), Stop Loss BELOW entry
+   - For SHORT positions: Entry > Take Profit (take profit BELOW entry), Stop Loss ABOVE entry
+   - NEVER set take profit in the wrong direction! If LONG, take profit must be higher than entry. If SHORT, take profit must be lower than entry.
+   
    - For Scalpers: Look for quick entry points, tight stops, multiple small profit targets
    - For Swing Trading: Look for swing points, moderate stops, medium profit targets
    - For Long Term: Look for major support/resistance, wider stops, large profit targets
@@ -218,14 +224,22 @@ RESPOND ONLY IN VALID JSON FORMAT:
     "recommended_leverage": number (your recommended leverage from 1 to 100),
     "trading_strategy": "string (e.g., Breakout, Reversal, Trend Following, Range Trading)",
     "entry_price": number (entry price - MUST be realistic based on chart),
-    "stop_loss": number (stop loss price - adjusted for recommended leverage),
-    "take_profit": number (take profit price - at least 2:1 risk:reward),
+    "stop_loss": number (stop loss price - MUST be BELOW entry for LONG, ABOVE entry for SHORT - adjusted for recommended leverage),
+    "take_profit": number (take profit price - MUST be ABOVE entry for LONG, BELOW entry for SHORT - at least 2:1 risk:reward),
     "confidence": number (0-100, confidence level),
     "pattern_detected": "string (detected chart pattern)",
     "analysis": "string (detailed explanation of all your decisions: why this position type, why this leverage, why these levels)",
     "risk_reward_ratio": number (risk:reward ratio),
     "current_price_read": number (the actual current price you read from the chart)
 }}
+
+CRITICAL DIRECTION RULES - DOUBLE CHECK BEFORE RESPONDING:
+- If position_type is "long": 
+  * take_profit MUST be > entry_price (take profit ABOVE entry)
+  * stop_loss MUST be < entry_price (stop loss BELOW entry)
+- If position_type is "short": 
+  * take_profit MUST be < entry_price (take profit BELOW entry)
+  * stop_loss MUST be > entry_price (stop loss ABOVE entry)
 
 IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and explain in the analysis field why you couldn't read them.
 """
@@ -296,19 +310,67 @@ IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and exp
                                     analysis_data['confidence'] = 0.3  # Bajar confianza
                                     analysis_data['analysis'] += f" [ADVERTENCIA: Precios ajustados. Precio actual leído: {current_price}]"
                         
-                        # Validar que stop loss y take profit sean razonables respecto a entry
+                        # Obtener tipo de posición
+                        position_type_detected = analysis_data.get('position_type', 'long').lower()
+                        
+                        # Validar que stop loss y take profit sean razonables respecto a entry Y estén en la dirección correcta
                         if entry_price > 0:
-                            if analysis_data.get('stop_loss', 0) > 0:
-                                stop_pct = abs(entry_price - analysis_data['stop_loss']) / entry_price * 100
-                                if stop_pct > 10:  # Stop loss no debe ser más del 10%
-                                    analysis_data['stop_loss'] = entry_price * 0.97
-                                    self.logger.warning(f"Stop loss ajustado a 3% del entry")
+                            stop_loss = analysis_data.get('stop_loss', 0)
+                            take_profit = analysis_data.get('take_profit', 0)
                             
-                            if analysis_data.get('take_profit', 0) > 0:
-                                take_pct = abs(analysis_data['take_profit'] - entry_price) / entry_price * 100
-                                if take_pct < 1:  # Take profit debe ser al menos 1%
-                                    analysis_data['take_profit'] = entry_price * 1.06
-                                    self.logger.warning(f"Take profit ajustado a 6% del entry")
+                            # Validar Stop Loss según tipo de posición
+                            if stop_loss > 0:
+                                if position_type_detected == 'long':
+                                    # LONG: Stop loss debe estar ABAJO del entry
+                                    if stop_loss > entry_price:
+                                        # Stop loss está arriba, corregir
+                                        stop_pct = abs(entry_price - stop_loss) / entry_price * 100
+                                        if stop_pct > 10:
+                                            analysis_data['stop_loss'] = entry_price * 0.97  # 3% abajo
+                                        else:
+                                            analysis_data['stop_loss'] = entry_price * 0.98  # 2% abajo
+                                        self.logger.warning(f"Stop loss corregido para LONG: debe estar abajo del entry")
+                                else:  # SHORT
+                                    # SHORT: Stop loss debe estar ARRIBA del entry
+                                    if stop_loss < entry_price:
+                                        # Stop loss está abajo, corregir
+                                        stop_pct = abs(stop_loss - entry_price) / entry_price * 100
+                                        if stop_pct > 10:
+                                            analysis_data['stop_loss'] = entry_price * 1.03  # 3% arriba
+                                        else:
+                                            analysis_data['stop_loss'] = entry_price * 1.02  # 2% arriba
+                                        self.logger.warning(f"Stop loss corregido para SHORT: debe estar arriba del entry")
+                            
+                            # Validar Take Profit según tipo de posición - CRÍTICO
+                            if take_profit > 0:
+                                if position_type_detected == 'long':
+                                    # LONG: Take profit debe estar ARRIBA del entry
+                                    if take_profit < entry_price:
+                                        # Take profit está abajo, corregir
+                                        take_pct = abs(take_profit - entry_price) / entry_price * 100
+                                        if take_pct < 1:
+                                            analysis_data['take_profit'] = entry_price * 1.06  # 6% arriba
+                                        else:
+                                            # Ajustar a dirección correcta manteniendo el porcentaje
+                                            analysis_data['take_profit'] = entry_price * (1 + take_pct / 100)
+                                        self.logger.warning(f"Take profit corregido para LONG: debe estar arriba del entry")
+                                else:  # SHORT
+                                    # SHORT: Take profit debe estar ABAJO del entry
+                                    if take_profit > entry_price:
+                                        # Take profit está arriba, corregir
+                                        take_pct = abs(take_profit - entry_price) / entry_price * 100
+                                        if take_pct < 1:
+                                            analysis_data['take_profit'] = entry_price * 0.94  # 6% abajo
+                                        else:
+                                            # Ajustar a dirección correcta manteniendo el porcentaje
+                                            analysis_data['take_profit'] = entry_price * (1 - take_pct / 100)
+                                        self.logger.warning(f"Take profit corregido para SHORT: debe estar abajo del entry")
+                                    
+                                    # Validar que take profit tenga un porcentaje mínimo razonable
+                                    take_pct_correct = abs(entry_price - analysis_data['take_profit']) / entry_price * 100
+                                    if take_pct_correct < 1:
+                                        analysis_data['take_profit'] = entry_price * 0.98  # Mínimo 2% abajo para SHORT
+                                        self.logger.warning(f"Take profit ajustado a mínimo 2% abajo del entry para SHORT")
                         
                         # Asegurar campos de texto
                         if 'symbol_detected' not in analysis_data:
@@ -332,9 +394,18 @@ IMPORTANT: If you cannot read the prices accurately, set all prices to 0 and exp
                                 entry = analysis_data['entry_price']
                                 stop = analysis_data['stop_loss']
                                 take = analysis_data['take_profit']
+                                position_type_calc = analysis_data.get('position_type', 'long').lower()
+                                
                                 if entry > 0 and stop > 0:
-                                    risk = abs(entry - stop)
-                                    reward = abs(take - entry)
+                                    if position_type_calc == 'long':
+                                        # LONG: risk = entry - stop (stop está abajo), reward = take - entry (take está arriba)
+                                        risk = abs(entry - stop) if stop < entry else abs(entry - stop)
+                                        reward = abs(take - entry) if take > entry else abs(take - entry)
+                                    else:  # SHORT
+                                        # SHORT: risk = stop - entry (stop está arriba), reward = entry - take (take está abajo)
+                                        risk = abs(stop - entry) if stop > entry else abs(entry - stop)
+                                        reward = abs(entry - take) if take < entry else abs(take - entry)
+                                    
                                     analysis_data['risk_reward_ratio'] = reward / risk if risk > 0 else 0.0
                             else:
                                 analysis_data['risk_reward_ratio'] = 0.0
